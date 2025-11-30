@@ -1,11 +1,7 @@
 {
   "appId": "rs.lovackikutak.mobile",
   "appName": "Lovački Kutak Mobile",
-  "webDir": "dist",
-  "server": {
-    "url": "http://localhost:9000",
-    "cleartext": true
-  },
+  "webDir": "dist/spa",
   "plugins": {
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]
