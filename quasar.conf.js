@@ -60,7 +60,7 @@ module.exports = configure(function (ctx) {
     animations: [],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#bootfiles
-    boot: ['pinia', 'axios', 'capacitor'],
+    boot: ['pinia', 'auth', 'axios', 'capacitor'],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/developing-mobile-apps/configuring-capacitor
     capacitor: {

@@ -3,51 +3,12 @@
     <q-form @submit="handleSubmit" class="q-gutter-md">
       <q-input
         v-model="content"
-        label="What's on your mind?"
+        label="Šta vam je na umu?"
         type="textarea"
         rows="5"
         :rules="[validateRequired]"
         @input="saveDraft"
       />
-
-      <!-- Tags -->
-      <q-input
-        v-model="tagInput"
-        label="Tags"
-        hint="Type and press enter to add tags"
-        @keyup.enter="addTag"
-        @input="loadTagSuggestions"
-      >
-        <template v-slot:append>
-          <q-btn icon="add" flat dense @click="addTag" />
-        </template>
-        <template v-if="tagSuggestions.length > 0" v-slot:hint>
-          <div class="q-gutter-xs">
-            <q-chip
-              v-for="suggestion in tagSuggestions"
-              :key="suggestion"
-              size="sm"
-              clickable
-              @click="selectTagSuggestion(suggestion)"
-            >
-              {{ suggestion }}
-            </q-chip>
-          </div>
-        </template>
-      </q-input>
-
-      <div v-if="tags.length > 0" class="q-gutter-xs">
-        <q-chip
-          v-for="tag in tags"
-          :key="tag"
-          removable
-          @remove="removeTag(tag)"
-          color="primary"
-          text-color="white"
-        >
-          {{ tag }}
-        </q-chip>
-      </div>
 
       <!-- Media preview -->
       <div v-if="mediaFiles.length > 0" class="row q-gutter-sm">
@@ -72,7 +33,7 @@
       <!-- Media upload -->
       <q-file
         v-model="fileInput"
-        label="Add photos/videos"
+        label="Dodaj fotografije/video"
         multiple
         accept="image/*,video/*"
         @update:model-value="handleFileSelect"
@@ -85,7 +46,7 @@
       <!-- YouTube link -->
       <q-input
         v-model="ytLink"
-        label="YouTube link (optional)"
+        label="YouTube link (opciono)"
         @input="saveDraft"
       />
 
@@ -98,12 +59,12 @@
 
       <div class="row q-gutter-md">
         <q-btn
-          label="Cancel"
+          label="Otkaži"
           flat
           @click="$router.back()"
         />
         <q-btn
-          label="Publish"
+          label="Objavi"
           type="submit"
           color="primary"
           :loading="submitting"
@@ -122,7 +83,6 @@ import uploadService from '../services/upload';
 import storageService from '../services/storage';
 import { validateRequired } from '../utils/validators';
 import apiService from '../services/api';
-import { debouncedGetTagSuggestions } from '../utils/tags';
 import { getStoreSafely } from '../utils/pinia';
 
 const router = useRouter();
@@ -130,14 +90,11 @@ const $q = useQuasar();
 const postsStoreRef = ref(null);
 
 const content = ref('');
-const tags = ref([]);
-const tagInput = ref('');
 const mediaFiles = ref([]);
 const fileInput = ref(null);
 const ytLink = ref('');
 const uploadProgress = ref(0);
 const submitting = ref(false);
-const tagSuggestions = ref([]);
 
 const DRAFT_KEY = 'post_draft';
 
@@ -162,7 +119,6 @@ onMounted(async () => {
   if (draft) {
     const parsed = JSON.parse(draft);
     content.value = parsed.content || '';
-    tags.value = parsed.tags || [];
     ytLink.value = parsed.ytLink || '';
   }
 });
@@ -170,39 +126,9 @@ onMounted(async () => {
 const saveDraft = async () => {
   const draft = {
     content: content.value,
-    tags: tags.value,
     ytLink: ytLink.value,
   };
   await storageService.set(DRAFT_KEY, JSON.stringify(draft));
-};
-
-const addTag = async () => {
-  const tag = tagInput.value.trim();
-  if (tag && !tags.value.includes(tag)) {
-    tags.value.push(tag);
-    tagInput.value = '';
-    await saveDraft();
-  }
-};
-
-const removeTag = async (tag) => {
-  tags.value = tags.value.filter((t) => t !== tag);
-  await saveDraft();
-};
-
-const loadTagSuggestions = async () => {
-  if (tagInput.value.length < 2) {
-    tagSuggestions.value = [];
-    return;
-  }
-  const suggestions = await debouncedGetTagSuggestions(tagInput.value);
-  tagSuggestions.value = suggestions.filter((s) => !tags.value.includes(s));
-};
-
-const selectTagSuggestion = async (tag) => {
-  tagInput.value = tag;
-  await addTag();
-  tagSuggestions.value = [];
 };
 
 const handleFileSelect = async (files) => {
@@ -255,7 +181,7 @@ const handleSubmit = async () => {
   } catch (error) {
     $q.notify({
       type: 'negative',
-      message: error.message || 'Failed to create post',
+      message: error.message || 'Neuspešno kreiranje objave',
     });
   } finally {
     submitting.value = false;
@@ -271,7 +197,6 @@ const publishPost = async (mediaUrls) => {
   const postData = {
     content: content.value,
     media: mediaUrls,
-    tags: tags.value,
     yt_link: ytLink.value || null,
   };
 
@@ -282,13 +207,13 @@ const publishPost = async (mediaUrls) => {
     await storageService.remove(DRAFT_KEY);
     $q.notify({
       type: 'positive',
-      message: 'Post created successfully',
+      message: 'Objava uspešno kreirana',
     });
     router.push('/timeline');
   } else {
     $q.notify({
       type: 'negative',
-      message: result.error || 'Failed to create post',
+      message: result.error || 'Neuspešno kreiranje objave',
     });
   }
 };

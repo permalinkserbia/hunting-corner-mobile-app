@@ -2,7 +2,7 @@
   <q-page class="flex flex-center">
     <q-card class="q-pa-md" style="min-width: 350px">
       <q-card-section>
-        <div class="text-h6 text-center">Login</div>
+        <div class="text-h6 text-center">Prijava</div>
       </q-card-section>
 
       <q-card-section>
@@ -17,7 +17,7 @@
 
           <q-input
             v-model="password"
-            label="Password"
+            label="Lozinka"
             type="password"
             :rules="[validateRequired]"
             required
@@ -25,7 +25,7 @@
 
           <div>
           <q-btn
-            label="Login"
+            label="Prijavi se"
             type="submit"
             color="primary"
             class="full-width"
@@ -36,7 +36,7 @@
           <div class="text-center">
             <q-btn
               flat
-              label="Don't have an account? Register"
+              label="Nemate nalog? Registrujte se"
               @click="$router.push('/auth/register')"
             />
           </div>
@@ -44,7 +44,7 @@
           <!-- Social login placeholders -->
           <q-separator />
           <div class="text-center text-caption text-grey">
-            Social login coming soon
+            Društvene mreže uskoro
           </div>
           <!-- TODO: Implement Google login -->
           <!-- TODO: Implement Facebook login -->
@@ -94,7 +94,7 @@ const handleLogin = async () => {
       console.error('Failed to get auth store (non-Pinia error):', error);
       $q.notify({
         type: 'negative',
-        message: 'An error occurred. Please try again.',
+        message: 'Došlo je do greške. Molimo pokušajte ponovo.',
       });
       return;
     }
@@ -110,20 +110,20 @@ const handleLogin = async () => {
     if (result.success) {
       $q.notify({
         type: 'positive',
-        message: 'Login successful',
+        message: 'Uspešna prijava',
       });
       const redirect = route.query.redirect || '/timeline';
       router.push(redirect);
     } else {
       $q.notify({
         type: 'negative',
-        message: result.error || 'Login failed',
+        message: result.error || 'Prijava neuspešna',
       });
     }
   } catch (error) {
     $q.notify({
       type: 'negative',
-      message: 'An error occurred. Please try again.',
+      message: 'Došlo je do greške. Molimo pokušajte ponovo.',
     });
     console.error('Login error:', error);
   } finally {

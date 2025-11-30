@@ -1,9 +1,9 @@
 {
   "name": "hunting-corner-mobile",
   "version": "1.0.0",
-  "description": "Hunting Corner Mobile App",
-  "productName": "Hunting Corner Mobile",
-  "author": "Hunting Corner Team",
+  "description": "Lovački Kutak Mobilna Aplikacija",
+  "productName": "Lovački Kutak Mobile",
+  "author": "Lovački Kutak Tim",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.ts,.vue ./",

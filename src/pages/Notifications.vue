@@ -1,10 +1,10 @@
 <template>
   <q-page>
     <q-toolbar>
-      <q-toolbar-title>Notifications</q-toolbar-title>
+      <q-toolbar-title>Obaveštenja</q-toolbar-title>
       <q-btn
         flat
-        label="Mark all read"
+        label="Označi sve kao pročitano"
         @click="markAllRead"
         v-if="notificationsStore.unreadCount > 0"
       />
@@ -36,7 +36,7 @@
 
     <div v-if="notificationsStore.notifications.length === 0" class="text-center q-pa-lg">
       <q-icon name="notifications_off" size="64px" color="grey" />
-      <div class="text-grey q-mt-md">No notifications</div>
+      <div class="text-grey q-mt-md">Nema obaveštenja</div>
     </div>
   </q-page>
 </template>

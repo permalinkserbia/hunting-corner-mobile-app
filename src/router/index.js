@@ -16,6 +16,11 @@ const routes = [
         component: () => import('src/pages/Timeline.vue'),
       },
       {
+        path: 'posts/:id',
+        name: 'post-detail',
+        component: () => import('src/pages/PostDetail.vue'),
+      },
+      {
         path: 'post/create',
         name: 'post-create',
         component: () => import('src/pages/PostCreate.vue'),
@@ -112,6 +117,11 @@ router.beforeEach(async (to, from, next) => {
   try {
     const { useAuthStore } = await import('../stores/auth');
     const authStore = await getStoreSafely(() => useAuthStore(), 20, 50);
+
+    // Auth should be initialized by boot file, but ensure it's done
+    if (!authStore.user && !authStore.accessToken) {
+      await authStore.initialize();
+    }
 
     if (!authStore.isAuthenticated) {
       next({ name: 'login', query: { redirect: to.fullPath } });

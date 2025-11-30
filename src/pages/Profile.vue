@@ -12,8 +12,8 @@
 
       <q-card-section>
         <q-tabs v-model="tab">
-          <q-tab name="posts" label="Posts" />
-          <q-tab name="ads" label="Ads" />
+          <q-tab name="posts" label="Objave" />
+          <q-tab name="ads" label="Oglasi" />
         </q-tabs>
 
         <q-tab-panels v-model="tab" animated>
@@ -44,7 +44,7 @@
       </q-card-section>
 
       <q-card-actions>
-        <q-btn flat label="Edit Profile" @click="$router.push('/settings')" />
+        <q-btn flat label="Izmeni Profil" @click="$router.push('/settings')" />
       </q-card-actions>
     </q-card>
   </q-page>

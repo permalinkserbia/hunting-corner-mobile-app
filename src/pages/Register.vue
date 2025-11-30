@@ -2,14 +2,14 @@
   <q-page class="flex flex-center">
     <q-card class="q-pa-md" style="min-width: 350px">
       <q-card-section>
-        <div class="text-h6 text-center">Register</div>
+        <div class="text-h6 text-center">Registracija</div>
       </q-card-section>
 
       <q-card-section>
         <q-form @submit="handleRegister" class="q-gutter-md">
           <q-input
             v-model="name"
-            label="Name"
+            label="Ime"
             :rules="[validateRequired]"
             required
           />
@@ -24,7 +24,7 @@
 
           <q-input
             v-model="password"
-            label="Password"
+            label="Lozinka"
             type="password"
             :rules="[validatePassword]"
             required
@@ -32,15 +32,15 @@
 
           <q-input
             v-model="passwordConfirm"
-            label="Confirm Password"
+            label="Potvrdi Lozinku"
             type="password"
-            :rules="[(val) => val === password || 'Passwords do not match']"
+            :rules="[(val) => val === password || 'Lozinke se ne poklapaju']"
             required
           />
 
           <div>
           <q-btn
-            label="Register"
+            label="Registruj se"
             type="submit"
             color="primary"
             class="full-width"
@@ -51,7 +51,7 @@
           <div class="text-center">
             <q-btn
               flat
-              label="Already have an account? Login"
+              label="Već imate nalog? Prijavite se"
               @click="$router.push('/auth/login')"
             />
           </div>
@@ -104,7 +104,7 @@ const handleRegister = async () => {
       console.error('Failed to get auth store:', error);
       $q.notify({
         type: 'negative',
-        message: 'Application is still loading. Please try again.',
+        message: 'Aplikacija se još učitava. Molimo pokušajte ponovo.',
       });
       return;
     }
@@ -121,19 +121,19 @@ const handleRegister = async () => {
     if (result.success) {
       $q.notify({
         type: 'positive',
-        message: 'Registration successful',
+        message: 'Uspešna registracija',
       });
       router.push('/timeline');
     } else {
       $q.notify({
         type: 'negative',
-        message: result.error || 'Registration failed',
+        message: result.error || 'Registracija neuspešna',
       });
     }
   } catch (error) {
     $q.notify({
       type: 'negative',
-      message: 'An error occurred. Please try again.',
+        message: 'Došlo je do greške. Molimo pokušajte ponovo.',
     });
     console.error('Registration error:', error);
   } finally {

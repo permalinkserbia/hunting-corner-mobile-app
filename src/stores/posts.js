@@ -111,6 +111,29 @@ export const usePostsStore = defineStore('posts', () => {
     websocketSubscribed.value = false;
   }
 
+  async function fetchPost(postId) {
+    try {
+      const response = await apiService.get(`/posts/${postId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async function addComment(postId, content) {
+    try {
+      const response = await apiService.post(`/posts/${postId}/comments`, {
+        content,
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to add comment',
+      };
+    }
+  }
+
   return {
     posts,
     loading,
@@ -121,6 +144,8 @@ export const usePostsStore = defineStore('posts', () => {
     createPost,
     likePost,
     unlikePost,
+    fetchPost,
+    addComment,
     subscribeToRealtime,
     unsubscribeFromRealtime,
   };

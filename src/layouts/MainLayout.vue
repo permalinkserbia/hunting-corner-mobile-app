@@ -10,28 +10,20 @@
           aria-label="Menu"
           @click="leftDrawerOpen = !leftDrawerOpen"
         />
-        <q-toolbar-title> Hunting Corner </q-toolbar-title>
+        <q-toolbar-title> Lovački Kutak </q-toolbar-title>
         <q-btn flat dense round icon="search" @click="$router.push('/search')" />
       </q-toolbar>
     </q-header>
 
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
       <q-list>
-        <q-item-label header> Menu </q-item-label>
-        <q-item clickable v-ripple to="/settings">
-          <q-item-section avatar>
-            <q-icon name="settings" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Settings</q-item-label>
-          </q-item-section>
-        </q-item>
+        <q-item-label header> Meni </q-item-label>
         <q-item clickable v-ripple to="/profile" v-if="isAuthenticated">
           <q-item-section avatar>
             <q-icon name="person" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>My Profile</q-item-label>
+            <q-item-label>Moj Profil</q-item-label>
           </q-item-section>
         </q-item>
         <q-item clickable v-ripple @click="handleLogout" v-if="isAuthenticated">
@@ -39,7 +31,7 @@
             <q-icon name="logout" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>Logout</q-item-label>
+            <q-item-label>Odjavi se</q-item-label>
           </q-item-section>
         </q-item>
         <q-item clickable v-ripple to="/auth/login" v-if="!isAuthenticated">
@@ -47,7 +39,7 @@
             <q-icon name="login" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>Login</q-item-label>
+            <q-item-label>Prijavi se</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>
@@ -62,29 +54,29 @@
         <q-route-tab
           name="timeline"
           icon="home"
-          label="Timeline"
+          label="Aktivnosti"
           to="/timeline"
           exact
         />
         <q-route-tab
           name="post"
           icon="add_circle"
-          label="Post"
+          label="Objavi"
           to="/post/create"
           exact
         />
-        <q-route-tab name="ads" icon="store" label="Ads" to="/ads" exact />
+        <q-route-tab name="ads" icon="store" label="Oglasi" to="/ads" exact />
         <q-route-tab
           name="notifications"
           icon="notifications"
-          label="Notifications"
+          label="Obaveštenja"
           to="/notifications"
           exact
         />
         <q-route-tab
           name="profile"
           icon="person"
-          label="Profile"
+          label="Profil"
           to="/profile"
           exact
         />
@@ -99,7 +91,7 @@
       <template v-slot:avatar>
         <q-icon name="wifi_off" />
       </template>
-      You are currently offline. Some features may be limited.
+      Trenutno ste van mreže. Neke funkcije mogu biti ograničene.
     </q-banner>
   </q-layout>
 </template>
@@ -145,8 +137,8 @@ onMounted(async () => {
 
 const handleLogout = async () => {
   $q.dialog({
-    title: 'Confirm',
-    message: 'Are you sure you want to logout?',
+    title: 'Potvrdi',
+    message: 'Da li ste sigurni da želite da se odjavite?',
     cancel: true,
     persistent: true,
   }).onOk(async () => {

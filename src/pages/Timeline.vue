@@ -11,6 +11,7 @@
           v-for="post in (postsStoreRef?.posts || [])"
           :key="post.id"
           :post="post"
+          :clickable="true"
           @like="handleLike"
           @unlike="handleUnlike"
           @comment="handleComment"
@@ -29,8 +30,11 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
 import PostCard from '../components/PostCard.vue';
 import { getStoreSafely } from '../utils/pinia';
+
+const router = useRouter();
 
 const postsStoreRef = ref(null);
 
@@ -84,8 +88,8 @@ const handleUnlike = (postId) => {
 };
 
 const handleComment = (postId) => {
-  // TODO: Navigate to comments
-  console.log('Comment on post:', postId);
+  // Navigate to post detail page
+  router.push({ name: 'post-detail', params: { id: postId } });
 };
 
 const handleShare = (post) => {
