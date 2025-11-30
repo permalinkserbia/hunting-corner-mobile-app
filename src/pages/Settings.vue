@@ -5,13 +5,13 @@
       <q-item>
         <q-item-section avatar>
           <q-avatar>
-            <img v-if="authStore.user?.avatar" :src="authStore.user.avatar" />
+            <img v-if="authStore?.user?.avatar" :src="getImageUrl(authStore?.user?.avatar)" @error="handleImageError" />
             <q-icon v-else name="person" />
           </q-avatar>
         </q-item-section>
         <q-item-section>
-          <q-item-label>{{ authStore.user?.name }}</q-item-label>
-          <q-item-label caption>{{ authStore.user?.email }}</q-item-label>
+          <q-item-label>{{ authStore?.user?.name || 'Loading...' }}</q-item-label>
+          <q-item-label caption>{{ authStore?.user?.email || '' }}</q-item-label>
         </q-item-section>
         <q-item-section side>
           <q-btn flat label="Edit" @click="showEditDialog = true" />
@@ -95,11 +95,16 @@ import { useQuasar } from 'quasar';
 import apiService from '../services/api';
 import uploadService from '../services/upload';
 import { getStoreSafely } from '../utils/pinia';
+import { getImageUrl } from '../utils/image';
 
 const $q = useQuasar();
 const authStoreRef = ref(null);
 
 const authStore = computed(() => authStoreRef.value);
+
+function handleImageError(event) {
+  console.warn('Failed to load image:', event.target.src);
+}
 
 const darkMode = ref(false);
 const language = ref('sr');
@@ -110,25 +115,20 @@ const editBio = ref('');
 const avatarFile = ref(null);
 
 onMounted(async () => {
+  // Pinia is initialized via boot file, so it should be ready
   await nextTick();
-  await nextTick();
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-  await new Promise((resolve) => setTimeout(resolve, 100));
   
   try {
     const { useAuthStore } = await import('../stores/auth');
-    authStoreRef.value = await getStoreSafely(() => useAuthStore(), 20, 50);
-    editName.value = authStore.value?.user?.name || '';
-    editBio.value = authStore.value?.user?.bio || '';
+    authStoreRef.value = await getStoreSafely(() => useAuthStore());
+    
+    if (authStoreRef.value?.user) {
+      editName.value = authStoreRef.value.user.name || '';
+      editBio.value = authStoreRef.value.user.bio || '';
+    }
     darkMode.value = $q.dark.isActive;
   } catch (error) {
     console.error('Failed to initialize auth store:', error);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const { useAuthStore } = await import('../stores/auth');
-    authStoreRef.value = useAuthStore();
-    editName.value = authStore.value?.user?.name || '';
-    editBio.value = authStore.value?.user?.bio || '';
-    darkMode.value = $q.dark.isActive;
   }
 });
 

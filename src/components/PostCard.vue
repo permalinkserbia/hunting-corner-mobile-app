@@ -97,6 +97,7 @@
 <script setup>
 import { ref } from 'vue';
 import { formatRelativeTime } from '../utils/date';
+import { getImageUrl } from '../utils/image';
 
 const props = defineProps({
   post: {
@@ -108,32 +109,6 @@ const props = defineProps({
 const emit = defineEmits(['like', 'unlike', 'comment', 'share']);
 
 const slide = ref(0);
-
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'https://lovackikutak.rs';
-
-// Helper to get full image URL
-// Backend should return full URLs, but this is a fallback for relative paths
-function getImageUrl(url) {
-  if (!url) return '';
-  
-  // If URL is already absolute, return as-is
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  
-  // If URL starts with /storage/, it's already a proper path
-  if (url.startsWith('/storage/')) {
-    return `${API_BASE_URL}${url}`;
-  }
-  
-  // If URL starts with /, it's a relative path from domain root
-  if (url.startsWith('/')) {
-    return `${API_BASE_URL}${url}`;
-  }
-  
-  // Otherwise, assume it's a storage path and prepend /storage/
-  return `${API_BASE_URL}/storage/${url}`;
-}
 
 function handleImageError(event) {
   console.warn('Failed to load image:', event.target.src);

@@ -3,7 +3,7 @@
     <q-card v-if="authStore?.user">
       <q-card-section class="text-center">
         <q-avatar size="120px">
-          <img v-if="authStore.user.avatar" :src="authStore.user.avatar" />
+          <img v-if="authStore?.user?.avatar" :src="getImageUrl(authStore?.user?.avatar)" @error="handleImageError" />
           <q-icon v-else name="person" size="80px" />
         </q-avatar>
         <div class="text-h6 q-mt-md">{{ authStore?.user?.name }}</div>
@@ -55,6 +55,7 @@ import { ref, computed, onMounted, nextTick } from 'vue';
 import apiService from '../services/api';
 import PostCard from '../components/PostCard.vue';
 import { getStoreSafely } from '../utils/pinia';
+import { getImageUrl } from '../utils/image';
 
 const authStoreRef = ref(null);
 const tab = ref('posts');
@@ -62,6 +63,10 @@ const userPosts = ref([]);
 const userAds = ref([]);
 
 const authStore = computed(() => authStoreRef.value);
+
+function handleImageError(event) {
+  console.warn('Failed to load image:', event.target.src);
+}
 
 onMounted(async () => {
   await nextTick();
