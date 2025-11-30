@@ -39,13 +39,13 @@
           />
 
           <div>
-            <q-btn
-              label="Register"
-              type="submit"
-              color="primary"
-              class="full-width"
-              :loading="authStore.loading"
-            />
+          <q-btn
+            label="Register"
+            type="submit"
+            color="primary"
+            class="full-width"
+            :loading="loading || authStoreRef?.loading || false"
+          />
           </div>
 
           <div class="text-center">
@@ -62,39 +62,71 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { useAuthStore } from '../stores/auth';
+import { waitForPinia } from '../utils/pinia';
 import { validateEmail, validateRequired, validatePassword } from '../utils/validators';
 
 const router = useRouter();
 const $q = useQuasar();
-const authStore = useAuthStore();
 
 const name = ref('');
 const email = ref('');
 const password = ref('');
 const passwordConfirm = ref('');
+const authStoreRef = ref(null);
+const loading = ref(false);
+
+onMounted(async () => {
+  // Wait for Pinia to be ready
+  const piniaAvailable = await waitForPinia(20, 50);
+  if (piniaAvailable) {
+    const { useAuthStore } = await import('../stores/auth');
+    authStoreRef.value = useAuthStore();
+  } else {
+    console.error('Pinia not available after waiting');
+  }
+});
 
 const handleRegister = async () => {
-  const result = await authStore.register({
-    name: name.value,
-    email: email.value,
-    password: password.value,
-  });
+  // Wait for store if not ready
+  if (!authStoreRef.value) {
+    const piniaAvailable = await waitForPinia(10, 50);
+    if (piniaAvailable) {
+      const { useAuthStore } = await import('../stores/auth');
+      authStoreRef.value = useAuthStore();
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Application is still loading. Please wait a moment and try again.',
+      });
+      return;
+    }
+  }
 
-  if (result.success) {
-    $q.notify({
-      type: 'positive',
-      message: 'Registration successful',
+  loading.value = true;
+  try {
+    const result = await authStoreRef.value.register({
+      name: name.value,
+      email: email.value,
+      password: password.value,
     });
-    router.push('/timeline');
-  } else {
-    $q.notify({
-      type: 'negative',
-      message: result.error || 'Registration failed',
-    });
+
+    if (result.success) {
+      $q.notify({
+        type: 'positive',
+        message: 'Registration successful',
+      });
+      router.push('/timeline');
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: result.error || 'Registration failed',
+      });
+    }
+  } finally {
+    loading.value = false;
   }
 };
 </script>

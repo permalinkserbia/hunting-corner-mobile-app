@@ -1,5 +1,5 @@
 import Pusher from 'pusher-js';
-import { useAuthStore } from '../stores/auth';
+import { getActivePinia } from 'pinia';
 
 const WS_URL = process.env.VUE_APP_WS_URL || 'wss://api.lovackikutak.rs/ws';
 const PUSHER_KEY = process.env.VUE_APP_PUSHER_KEY || '';
@@ -8,9 +8,16 @@ let pusher = null;
 let channel = null;
 const subscriptions = new Map();
 
-function initialize() {
+async function initialize() {
   if (pusher) return;
 
+  const pinia = getActivePinia();
+  if (!pinia) {
+    console.warn('Pinia not initialized, cannot initialize WebSocket');
+    return;
+  }
+
+  const { useAuthStore } = await import('../stores/auth');
   const authStore = useAuthStore();
   if (!authStore.isAuthenticated) return;
 

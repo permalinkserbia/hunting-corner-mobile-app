@@ -26,7 +26,7 @@
             <q-item-label>Settings</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable v-ripple to="/profile" v-if="authStore.isAuthenticated">
+        <q-item clickable v-ripple to="/profile" v-if="isAuthenticated">
           <q-item-section avatar>
             <q-icon name="person" />
           </q-item-section>
@@ -34,7 +34,7 @@
             <q-item-label>My Profile</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable v-ripple @click="handleLogout" v-if="authStore.isAuthenticated">
+        <q-item clickable v-ripple @click="handleLogout" v-if="isAuthenticated">
           <q-item-section avatar>
             <q-icon name="logout" />
           </q-item-section>
@@ -42,7 +42,7 @@
             <q-item-label>Logout</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable v-ripple to="/auth/login" v-if="!authStore.isAuthenticated">
+        <q-item clickable v-ripple to="/auth/login" v-if="!isAuthenticated">
           <q-item-section avatar>
             <q-icon name="login" />
           </q-item-section>
@@ -57,7 +57,7 @@
       <router-view />
     </q-page-container>
 
-    <q-footer elevated v-if="authStore.isAuthenticated">
+    <q-footer elevated v-if="isAuthenticated">
       <q-tabs v-model="tab" class="text-white">
         <q-route-tab
           name="timeline"
@@ -92,7 +92,7 @@
     </q-footer>
 
     <q-banner
-      v-if="!networkStore.isOnline"
+      v-if="!isOnline"
       class="bg-negative text-white fixed-top"
       style="z-index: 6000; margin-top: 50px"
     >
@@ -105,19 +105,45 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { useAuthStore } from '../stores/auth';
-import { useNetworkStore } from '../stores/network';
+import { getActivePinia } from 'pinia';
 
 const router = useRouter();
 const $q = useQuasar();
-const authStore = useAuthStore();
-const networkStore = useNetworkStore();
-
 const leftDrawerOpen = ref(false);
 const tab = ref('timeline');
+
+// Store references - will be set in onMounted
+const authStoreRef = ref(null);
+const networkStoreRef = ref(null);
+
+// Computed properties that safely access stores
+const isAuthenticated = computed(() => {
+  return authStoreRef.value?.isAuthenticated ?? false;
+});
+
+const isOnline = computed(() => {
+  return networkStoreRef.value?.isOnline ?? true;
+});
+
+onMounted(async () => {
+  // Wait for Pinia to be ready
+  let pinia = getActivePinia();
+  if (!pinia) {
+    // Retry after a short delay
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    pinia = getActivePinia();
+  }
+
+  if (pinia) {
+    const { useAuthStore } = await import('../stores/auth');
+    const { useNetworkStore } = await import('../stores/network');
+    authStoreRef.value = useAuthStore();
+    networkStoreRef.value = useNetworkStore();
+  }
+});
 
 const handleLogout = async () => {
   $q.dialog({
@@ -126,7 +152,9 @@ const handleLogout = async () => {
     cancel: true,
     persistent: true,
   }).onOk(async () => {
-    await authStore.logout();
+    if (authStoreRef.value) {
+      await authStoreRef.value.logout();
+    }
     router.push('/auth/login');
   });
 };

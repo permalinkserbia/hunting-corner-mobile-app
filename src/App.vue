@@ -4,15 +4,27 @@
 
 <script setup>
 import { onMounted } from 'vue';
-import { useAuthStore } from './stores/auth';
-import { useNetworkStore } from './stores/network';
+import { getActivePinia } from 'pinia';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
 
-const authStore = useAuthStore();
-const networkStore = useNetworkStore();
-
 onMounted(async () => {
+  // Wait a tick to ensure Pinia is fully initialized
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  
+  const pinia = getActivePinia();
+  if (!pinia) {
+    console.warn('Pinia not available in App.vue onMounted');
+    return;
+  }
+
+  // Import stores after Pinia is initialized
+  const { useAuthStore } = await import('./stores/auth');
+  const { useNetworkStore } = await import('./stores/network');
+  
+  const authStore = useAuthStore();
+  const networkStore = useNetworkStore();
+
   // Initialize auth state
   await authStore.initialize();
 

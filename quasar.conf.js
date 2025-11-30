@@ -42,7 +42,18 @@ module.exports = configure(function (ctx) {
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework
     framework: {
-      config: {},
+      config: {
+        brand: {
+          primary: '#37aa43',
+          secondary: '#2d8a37',
+          accent: '#256d2c',
+          dark: '#1e5622',
+          positive: '#37aa43',
+          negative: '#dc3545',
+          info: '#17a2b8',
+          warning: '#ffc107',
+        },
+      },
       plugins: ['Notify', 'Loading', 'Dialog', 'BottomSheet'],
     },
 

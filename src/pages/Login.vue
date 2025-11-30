@@ -24,13 +24,13 @@
           />
 
           <div>
-            <q-btn
-              label="Login"
-              type="submit"
-              color="primary"
-              class="full-width"
-              :loading="authStore.loading"
-            />
+          <q-btn
+            label="Login"
+            type="submit"
+            color="primary"
+            class="full-width"
+            :loading="loading || authStoreRef?.loading || false"
+          />
           </div>
 
           <div class="text-center">
@@ -55,38 +55,70 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { useAuthStore } from '../stores/auth';
+import { waitForPinia } from '../utils/pinia';
 import { validateEmail, validateRequired } from '../utils/validators';
 
 const router = useRouter();
 const route = useRoute();
 const $q = useQuasar();
-const authStore = useAuthStore();
 
 const email = ref('');
 const password = ref('');
+const authStoreRef = ref(null);
+const loading = ref(false);
+
+onMounted(async () => {
+  // Wait for Pinia to be ready
+  const piniaAvailable = await waitForPinia(20, 50);
+  if (piniaAvailable) {
+    const { useAuthStore } = await import('../stores/auth');
+    authStoreRef.value = useAuthStore();
+  } else {
+    console.error('Pinia not available after waiting');
+  }
+});
 
 const handleLogin = async () => {
-  const result = await authStore.login({
-    email: email.value,
-    password: password.value,
-  });
+  // Wait for store if not ready
+  if (!authStoreRef.value) {
+    const piniaAvailable = await waitForPinia(10, 50);
+    if (piniaAvailable) {
+      const { useAuthStore } = await import('../stores/auth');
+      authStoreRef.value = useAuthStore();
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Application is still loading. Please wait a moment and try again.',
+      });
+      return;
+    }
+  }
 
-  if (result.success) {
-    $q.notify({
-      type: 'positive',
-      message: 'Login successful',
+  loading.value = true;
+  try {
+    const result = await authStoreRef.value.login({
+      email: email.value,
+      password: password.value,
     });
-    const redirect = route.query.redirect || '/timeline';
-    router.push(redirect);
-  } else {
-    $q.notify({
-      type: 'negative',
-      message: result.error || 'Login failed',
-    });
+
+    if (result.success) {
+      $q.notify({
+        type: 'positive',
+        message: 'Login successful',
+      });
+      const redirect = route.query.redirect || '/timeline';
+      router.push(redirect);
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: result.error || 'Login failed',
+      });
+    }
+  } finally {
+    loading.value = false;
   }
 };
 </script>

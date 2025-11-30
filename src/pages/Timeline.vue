@@ -1,14 +1,14 @@
 <template>
   <q-page>
     <q-pull-to-refresh @refresh="refresh">
-      <q-infinite-scroll @load="loadMore" :offset="250" :disable="!postsStore.hasMore">
-        <div v-if="postsStore.posts.length === 0 && !postsStore.loading" class="text-center q-pa-lg">
+      <q-infinite-scroll @load="loadMore" :offset="250" :disable="!postsStoreRef || !postsStoreRef.hasMore">
+        <div v-if="postsStoreRef && postsStoreRef.posts.length === 0 && !postsStoreRef.loading" class="text-center q-pa-lg">
           <q-icon name="article" size="64px" color="grey" />
           <div class="text-grey q-mt-md">No posts yet</div>
         </div>
 
         <PostCard
-          v-for="post in postsStore.posts"
+          v-for="post in (postsStoreRef?.posts || [])"
           :key="post.id"
           :post="post"
           @like="handleLike"
@@ -28,37 +28,59 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
-import { usePostsStore } from '../stores/posts';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { getActivePinia } from 'pinia';
 import PostCard from '../components/PostCard.vue';
 
-const postsStore = usePostsStore();
+const postsStoreRef = ref(null);
 
 onMounted(async () => {
-  await postsStore.fetchPosts(1);
-  postsStore.subscribeToRealtime();
+  // Wait for Pinia to be ready
+  let pinia = getActivePinia();
+  if (!pinia) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    pinia = getActivePinia();
+  }
+
+  if (pinia) {
+    const { usePostsStore } = await import('../stores/posts');
+    postsStoreRef.value = usePostsStore();
+    
+    await postsStoreRef.value.fetchPosts(1);
+    postsStoreRef.value.subscribeToRealtime();
+  }
 });
 
 onUnmounted(() => {
-  postsStore.unsubscribeFromRealtime();
+  if (postsStoreRef.value) {
+    postsStoreRef.value.unsubscribeFromRealtime();
+  }
 });
 
 const refresh = async (done) => {
-  await postsStore.fetchPosts(1);
+  if (postsStoreRef.value) {
+    await postsStoreRef.value.fetchPosts(1);
+  }
   done();
 };
 
 const loadMore = async (index, done) => {
-  await postsStore.loadMore();
+  if (postsStoreRef.value) {
+    await postsStoreRef.value.loadMore();
+  }
   done();
 };
 
 const handleLike = (postId) => {
-  postsStore.likePost(postId);
+  if (postsStoreRef.value) {
+    postsStoreRef.value.likePost(postId);
+  }
 };
 
 const handleUnlike = (postId) => {
-  postsStore.unlikePost(postId);
+  if (postsStoreRef.value) {
+    postsStoreRef.value.unlikePost(postId);
+  }
 };
 
 const handleComment = (postId) => {
