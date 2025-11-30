@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Lovački Kutak Mobile</string>
+    <string name="title_activity_main">Lovački Kutak Mobile</string>
+    <string name="package_name">rs.lovackikutak.mobile</string>
+    <string name="custom_url_scheme">rs.lovackikutak.mobile</string>
+</resources>

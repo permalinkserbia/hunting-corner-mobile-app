@@ -2,7 +2,6 @@
   "appId": "rs.lovackikutak.mobile",
   "appName": "Lovački Kutak Mobile",
   "webDir": "dist",
-  "bundledWebRuntime": false,
   "server": {
     "url": "http://localhost:9000",
     "cleartext": true
