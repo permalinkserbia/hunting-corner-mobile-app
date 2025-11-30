@@ -3,7 +3,7 @@
     <q-card-section>
       <div class="row items-center q-mb-sm">
         <q-avatar>
-          <img v-if="post.user?.avatar" :src="post.user.avatar" />
+          <img v-if="post.user?.avatar" :src="getImageUrl(post.user.avatar)" @error="handleImageError" />
           <q-icon v-else name="person" />
         </q-avatar>
         <div class="q-ml-sm">
@@ -48,8 +48,23 @@
           :key="index"
           :name="index"
         >
-          <q-img v-if="media.type === 'image'" :src="media.url" fit="cover" />
-          <video v-else-if="media.type === 'video'" :src="media.url" controls class="full-width" />
+          <q-img
+            v-if="media.type === 'image'"
+            :src="getImageUrl(media.url)"
+            fit="cover"
+            @error="handleImageError"
+            loading="lazy"
+          >
+            <template v-slot:error>
+              <div class="absolute-full flex flex-center bg-grey-3 text-grey-8">
+                <div class="text-center">
+                  <q-icon name="broken_image" size="48px" />
+                  <div class="text-caption q-mt-sm">Image not available</div>
+                </div>
+              </div>
+            </template>
+          </q-img>
+          <video v-else-if="media.type === 'video'" :src="getImageUrl(media.url)" controls class="full-width" />
         </q-carousel-slide>
       </q-carousel>
 
@@ -93,6 +108,36 @@ const props = defineProps({
 const emit = defineEmits(['like', 'unlike', 'comment', 'share']);
 
 const slide = ref(0);
+
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'https://lovackikutak.rs';
+
+// Helper to get full image URL
+// Backend should return full URLs, but this is a fallback for relative paths
+function getImageUrl(url) {
+  if (!url) return '';
+  
+  // If URL is already absolute, return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // If URL starts with /storage/, it's already a proper path
+  if (url.startsWith('/storage/')) {
+    return `${API_BASE_URL}${url}`;
+  }
+  
+  // If URL starts with /, it's a relative path from domain root
+  if (url.startsWith('/')) {
+    return `${API_BASE_URL}${url}`;
+  }
+  
+  // Otherwise, assume it's a storage path and prepend /storage/
+  return `${API_BASE_URL}/storage/${url}`;
+}
+
+function handleImageError(event) {
+  console.warn('Failed to load image:', event.target.src);
+}
 
 const handleLike = () => {
   if (props.post.liked) {

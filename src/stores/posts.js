@@ -89,17 +89,20 @@ export const usePostsStore = defineStore('posts', () => {
     }
   }
 
-  function subscribeToRealtime() {
+  async function subscribeToRealtime() {
     if (websocketSubscribed.value) return;
 
-    websocketService.subscribe('post.created', (data) => {
-      // Prepend new post to timeline
-      if (data.post) {
-        posts.value.unshift(data.post);
-      }
-    });
-
-    websocketSubscribed.value = true;
+    try {
+      await websocketService.subscribe('post.created', (data) => {
+        // Prepend new post to timeline
+        if (data.post) {
+          posts.value.unshift(data.post);
+        }
+      });
+      websocketSubscribed.value = true;
+    } catch (error) {
+      console.warn('Failed to subscribe to realtime updates:', error);
+    }
   }
 
   function unsubscribeFromRealtime() {

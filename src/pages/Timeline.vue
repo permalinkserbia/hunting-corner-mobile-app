@@ -44,7 +44,7 @@ onMounted(async () => {
     
     if (postsStoreRef.value) {
       await postsStoreRef.value.fetchPosts(1);
-      postsStoreRef.value.subscribeToRealtime();
+      await postsStoreRef.value.subscribeToRealtime();
     }
   } catch (error) {
     console.error('Failed to initialize posts store:', error);

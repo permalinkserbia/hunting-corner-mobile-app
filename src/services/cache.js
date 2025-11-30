@@ -31,12 +31,25 @@ const cacheService = {
 
   async set(key, data) {
     try {
+      // Serialize data to plain JSON to avoid DataCloneError with Vue refs/reactive objects
+      // Use JSON.parse(JSON.stringify()) to deep clone and remove reactivity
+      const serializedData = JSON.parse(JSON.stringify(data));
+      
       await cache.setItem(key, {
-        data,
+        data: serializedData,
         timestamp: Date.now(),
       });
     } catch (error) {
       console.error('Cache set error:', error);
+      // If serialization fails, try storing as-is (might work for simple data)
+      try {
+        await cache.setItem(key, {
+          data,
+          timestamp: Date.now(),
+        });
+      } catch (fallbackError) {
+        console.error('Cache set fallback error:', fallbackError);
+      }
     }
   },
 

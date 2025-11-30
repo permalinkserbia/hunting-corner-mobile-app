@@ -14,32 +14,36 @@ async function initialize() {
   try {
     const { useAuthStore } = await import('../stores/auth');
     const authStore = await getStoreSafely(() => useAuthStore(), 10, 50);
-    if (!authStore.isAuthenticated) return;
+    
+    if (!authStore || !authStore.isAuthenticated || !authStore.user) {
+      console.warn('User not authenticated, cannot initialize WebSocket');
+      return;
+    }
 
-  // TODO: Configure Pusher with proper auth endpoint
-  // For now, using public channel (backend should handle auth)
-  pusher = new Pusher(PUSHER_KEY || 'default-key', {
-    cluster: process.env.VUE_APP_PUSHER_CLUSTER || 'eu',
-    encrypted: true,
-    // authEndpoint: `${API_BASE_URL}/broadcasting/auth`,
-    // auth: {
-    //   headers: {
-    //     Authorization: `Bearer ${authStore.accessToken}`,
-    //   },
-    // },
-  });
+    // TODO: Configure Pusher with proper auth endpoint
+    // For now, using public channel (backend should handle auth)
+    pusher = new Pusher(PUSHER_KEY || 'default-key', {
+      cluster: process.env.VUE_APP_PUSHER_CLUSTER || 'eu',
+      encrypted: true,
+      // authEndpoint: `${API_BASE_URL}/broadcasting/auth`,
+      // auth: {
+      //   headers: {
+      //     Authorization: `Bearer ${authStore.accessToken}`,
+      //   },
+      // },
+    });
 
     // Subscribe to user's private channel
     channel = pusher.subscribe(`private-user.${authStore.user.id}`);
   } catch (error) {
-    console.warn('Pinia not initialized, cannot initialize WebSocket:', error);
+    console.warn('Failed to initialize WebSocket:', error);
     return;
   }
 }
 
-function subscribe(event, callback) {
+async function subscribe(event, callback) {
   if (!channel) {
-    initialize();
+    await initialize();
   }
 
   if (!channel) {
