@@ -1,29 +1,18 @@
 /**
- * Safely get a store with retry logic
- * For Pinia errors, retries indefinitely until ready
+ * Safely get a store - with Pinia boot file, stores should be ready
+ * This is a simple wrapper that handles any edge cases
  * @param {Function} storeFactory - Function that returns the store (e.g., () => useAuthStore())
- * @param {number} maxAttempts - Maximum number of attempts for non-Pinia errors (default: 1000, effectively infinite for Pinia)
- * @param {number} delay - Delay between attempts in ms (default: 100)
  * @returns {Promise<*>} - The store instance
  */
-export async function getStoreSafely(storeFactory, maxAttempts = 1000, delay = 100) {
-  // First, wait for Pinia instance to exist
-  if (typeof window !== 'undefined' && window.__PINIA_INSTANCE__) {
-    // Give it a moment to be injected
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  } else {
-    // Wait for instance to be set
-    for (let i = 0; i < 20; i++) {
-      if (window.__PINIA_INSTANCE__) {
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        break;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-  }
+export async function getStoreSafely(storeFactory) {
+  // With Quasar boot files, Pinia is initialized before components mount
+  // So stores should be available immediately. But we'll add a simple retry
+  // just in case there are any timing issues.
   
-  // Now try to get the store - retry indefinitely for Pinia errors
   let attempt = 0;
+  const maxAttempts = 10;
+  const delay = 50;
+  
   while (attempt < maxAttempts) {
     try {
       return storeFactory();
@@ -39,20 +28,18 @@ export async function getStoreSafely(storeFactory, maxAttempts = 1000, delay = 1
         errorString.includes('getActivePinia') ||
         errorString.includes('no active Pinia');
       
-      if (isPiniaError) {
-        // Pinia not ready yet, wait and retry indefinitely
-        // Use exponential backoff for later attempts
-        const waitTime = attempt < 10 ? delay : (attempt < 50 ? delay * 2 : delay * 3);
-        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      if (isPiniaError && attempt < maxAttempts - 1) {
+        // Pinia not ready yet, wait a bit and retry
+        await new Promise((resolve) => setTimeout(resolve, delay));
         attempt++;
-        continue; // Keep retrying for Pinia errors
+        continue;
       } else {
-        // Different error, rethrow it immediately
+        // Either not a Pinia error, or we've exhausted retries
         throw error;
       }
     }
   }
   
-  // Should never reach here for Pinia errors, but just in case
-  throw new Error('Failed to get store after maximum attempts');
+  // Should never reach here, but just in case
+  throw new Error('Failed to get store');
 }

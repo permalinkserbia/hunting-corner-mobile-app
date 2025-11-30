@@ -71,20 +71,15 @@ const authStoreRef = ref(null);
 const loading = ref(false);
 
 onMounted(async () => {
+  // Pinia is initialized via boot file, so it should be ready
+  // Just wait for nextTick to ensure Vue is ready
   await nextTick();
-  await nextTick();
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-  await new Promise((resolve) => setTimeout(resolve, 100));
   
   try {
     const { useAuthStore } = await import('../stores/auth');
-    authStoreRef.value = await getStoreSafely(() => useAuthStore(), 20, 50);
+    authStoreRef.value = await getStoreSafely(() => useAuthStore());
   } catch (error) {
     console.error('Failed to initialize auth store:', error);
-    // Retry after delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const { useAuthStore } = await import('../stores/auth');
-    authStoreRef.value = useAuthStore();
   }
 });
 
@@ -92,12 +87,14 @@ const handleLogin = async () => {
   if (!authStoreRef.value) {
     try {
       const { useAuthStore } = await import('../stores/auth');
+      // Use default parameters (1000 attempts, effectively infinite for Pinia errors)
       authStoreRef.value = await getStoreSafely(() => useAuthStore());
     } catch (error) {
-      console.error('Failed to get auth store:', error);
+      // This should only catch non-Pinia errors
+      console.error('Failed to get auth store (non-Pinia error):', error);
       $q.notify({
         type: 'negative',
-        message: 'Application is still loading. Please try again.',
+        message: 'An error occurred. Please try again.',
       });
       return;
     }

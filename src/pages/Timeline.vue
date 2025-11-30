@@ -35,23 +35,19 @@ import { getStoreSafely } from '../utils/pinia';
 const postsStoreRef = ref(null);
 
 onMounted(async () => {
+  // Pinia is initialized via boot file, so it should be ready
   await nextTick();
-  await nextTick();
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-  await new Promise((resolve) => setTimeout(resolve, 200)); // Longer initial delay
   
   try {
     const { usePostsStore } = await import('../stores/posts');
-    // getStoreSafely will retry indefinitely for Pinia errors
-    postsStoreRef.value = await getStoreSafely(() => usePostsStore(), 1000, 100);
+    postsStoreRef.value = await getStoreSafely(() => usePostsStore());
     
     if (postsStoreRef.value) {
       await postsStoreRef.value.fetchPosts(1);
       postsStoreRef.value.subscribeToRealtime();
     }
   } catch (error) {
-    // This should only catch non-Pinia errors
-    console.error('Failed to initialize posts store (non-Pinia error):', error);
+    console.error('Failed to initialize posts store:', error);
   }
 });
 

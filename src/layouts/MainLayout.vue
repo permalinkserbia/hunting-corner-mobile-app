@@ -129,21 +129,17 @@ const isOnline = computed(() => {
 });
 
 onMounted(async () => {
+  // Pinia is initialized via boot file, so it should be ready
   await nextTick();
-  await nextTick();
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-  await new Promise((resolve) => setTimeout(resolve, 200)); // Longer initial delay
   
   try {
-    // Import and use stores - getStoreSafely will retry indefinitely for Pinia errors
     const { useAuthStore } = await import('../stores/auth');
     const { useNetworkStore } = await import('../stores/network');
     
-    authStoreRef.value = await getStoreSafely(() => useAuthStore(), 1000, 100);
-    networkStoreRef.value = await getStoreSafely(() => useNetworkStore(), 1000, 100);
+    authStoreRef.value = await getStoreSafely(() => useAuthStore());
+    networkStoreRef.value = await getStoreSafely(() => useNetworkStore());
   } catch (error) {
-    // This should only catch non-Pinia errors
-    console.error('Failed to initialize stores (non-Pinia error):', error);
+    console.error('Failed to initialize stores:', error);
   }
 });
 

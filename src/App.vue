@@ -6,55 +6,24 @@
 import { onMounted, nextTick } from 'vue';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
+import { getStoreSafely } from './utils/pinia';
 
 let authStore = null;
 let networkStore = null;
 
-// Helper function to get store with infinite retries
-async function getStoreWithRetry(storeFactory, delay = 100) {
-  while (true) {
-    try {
-      return storeFactory();
-    } catch (error) {
-      const errorMessage = error?.message || '';
-      const errorString = String(error);
-      
-      if (
-        errorMessage.includes('getActivePinia') ||
-        errorMessage.includes('no active Pinia') ||
-        errorMessage.includes('Pinia') ||
-        errorString.includes('getActivePinia') ||
-        errorString.includes('no active Pinia')
-      ) {
-        // Pinia not ready, wait and retry
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        continue;
-      } else {
-        // Different error, rethrow
-        throw error;
-      }
-    }
-  }
-}
-
 onMounted(async () => {
-  // Wait for Vue to be ready and DOM to be rendered
+  // Pinia is initialized via boot file, so it should be ready
+  // Just wait for nextTick to ensure Vue is ready
   await nextTick();
-  await nextTick();
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-  await new Promise((resolve) => setTimeout(resolve, 200)); // Longer initial delay
-  
-  // Get stores with infinite retry (will keep trying until Pinia is ready)
+
   try {
     const { useAuthStore } = await import('./stores/auth');
     const { useNetworkStore } = await import('./stores/network');
-    
-    // These will keep retrying until Pinia is ready
-    authStore = await getStoreWithRetry(() => useAuthStore(), 100);
-    networkStore = await getStoreWithRetry(() => useNetworkStore(), 100);
+
+    authStore = await getStoreSafely(() => useAuthStore());
+    networkStore = await getStoreSafely(() => useNetworkStore());
   } catch (error) {
-    console.error('Failed to initialize stores (non-Pinia error):', error);
-    // If it's not a Pinia error, something else is wrong
+    console.error('Failed to initialize stores:', error);
     return;
   }
 

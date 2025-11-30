@@ -1,5 +1,3 @@
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
 import { Quasar } from 'quasar';
 import quasarLang from 'quasar/lang/sr-Latn';
 
@@ -14,17 +12,13 @@ import 'quasar/src/css/index.sass';
 // and placed in same folder as main.js
 import App from './App.vue';
 import router from './router';
+import { createApp } from 'vue';
 
-// Create Pinia instance first
-const pinia = createPinia();
-
-// Export pinia instance for direct access
-window.__PINIA_INSTANCE__ = pinia;
+// Note: Pinia is initialized in boot/pinia.js via Quasar boot files
+// This ensures it's ready before components mount
 
 const app = createApp(App);
 
-// Initialize Pinia BEFORE router and Quasar
-app.use(pinia);
 app.use(router);
 app.use(Quasar, {
   plugins: {},
