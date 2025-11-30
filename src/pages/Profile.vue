@@ -1,13 +1,13 @@
 <template>
   <q-page>
-    <q-card v-if="authStore.user">
+    <q-card v-if="authStore?.user">
       <q-card-section class="text-center">
         <q-avatar size="120px">
           <img v-if="authStore.user.avatar" :src="authStore.user.avatar" />
           <q-icon v-else name="person" size="80px" />
         </q-avatar>
-        <div class="text-h6 q-mt-md">{{ authStore.user.name }}</div>
-        <div class="text-caption text-grey">{{ authStore.user.email }}</div>
+        <div class="text-h6 q-mt-md">{{ authStore?.user?.name }}</div>
+        <div class="text-caption text-grey">{{ authStore?.user?.email }}</div>
       </q-card-section>
 
       <q-card-section>
@@ -51,18 +51,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useAuthStore } from '../stores/auth';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import apiService from '../services/api';
 import PostCard from '../components/PostCard.vue';
+import { getStoreSafely } from '../utils/pinia';
 
-const authStore = useAuthStore();
+const authStoreRef = ref(null);
 const tab = ref('posts');
 const userPosts = ref([]);
 const userAds = ref([]);
 
+const authStore = computed(() => authStoreRef.value);
+
 onMounted(async () => {
-  await loadUserData();
+  await nextTick();
+  await nextTick();
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  
+  try {
+    const { useAuthStore } = await import('../stores/auth');
+    authStoreRef.value = await getStoreSafely(() => useAuthStore(), 20, 50);
+    await loadUserData();
+  } catch (error) {
+    console.error('Failed to initialize auth store:', error);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const { useAuthStore } = await import('../stores/auth');
+    authStoreRef.value = useAuthStore();
+    await loadUserData();
+  }
 });
 
 const loadUserData = async () => {

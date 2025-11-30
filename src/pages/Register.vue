@@ -62,11 +62,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { waitForPinia } from '../utils/pinia';
 import { validateEmail, validateRequired, validatePassword } from '../utils/validators';
+import { getStoreSafely } from '../utils/pinia';
 
 const router = useRouter();
 const $q = useQuasar();
@@ -79,27 +79,32 @@ const authStoreRef = ref(null);
 const loading = ref(false);
 
 onMounted(async () => {
-  // Wait for Pinia to be ready
-  const piniaAvailable = await waitForPinia(20, 50);
-  if (piniaAvailable) {
+  await nextTick();
+  await nextTick();
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  
+  try {
+    const { useAuthStore } = await import('../stores/auth');
+    authStoreRef.value = await getStoreSafely(() => useAuthStore(), 20, 50);
+  } catch (error) {
+    console.error('Failed to initialize auth store:', error);
+    await new Promise((resolve) => setTimeout(resolve, 300));
     const { useAuthStore } = await import('../stores/auth');
     authStoreRef.value = useAuthStore();
-  } else {
-    console.error('Pinia not available after waiting');
   }
 });
 
 const handleRegister = async () => {
-  // Wait for store if not ready
   if (!authStoreRef.value) {
-    const piniaAvailable = await waitForPinia(10, 50);
-    if (piniaAvailable) {
+    try {
       const { useAuthStore } = await import('../stores/auth');
-      authStoreRef.value = useAuthStore();
-    } else {
+      authStoreRef.value = await getStoreSafely(() => useAuthStore(), 20, 50);
+    } catch (error) {
+      console.error('Failed to get auth store:', error);
       $q.notify({
         type: 'negative',
-        message: 'Application is still loading. Please wait a moment and try again.',
+        message: 'Application is still loading. Please try again.',
       });
       return;
     }
@@ -125,6 +130,12 @@ const handleRegister = async () => {
         message: result.error || 'Registration failed',
       });
     }
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'An error occurred. Please try again.',
+    });
+    console.error('Registration error:', error);
   } finally {
     loading.value = false;
   }

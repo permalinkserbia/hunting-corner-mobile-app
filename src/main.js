@@ -15,9 +15,16 @@ import 'quasar/src/css/index.sass';
 import App from './App.vue';
 import router from './router';
 
+// Create Pinia instance first
+const pinia = createPinia();
+
+// Export pinia instance for direct access
+window.__PINIA_INSTANCE__ = pinia;
+
 const app = createApp(App);
 
-app.use(createPinia());
+// Initialize Pinia BEFORE router and Quasar
+app.use(pinia);
 app.use(router);
 app.use(Quasar, {
   plugins: {},

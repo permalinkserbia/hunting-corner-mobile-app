@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getActivePinia } from 'pinia';
+import { getStoreSafely } from '../utils/pinia';
 
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'https://lovackikutak.rs/api';
 
@@ -37,22 +37,19 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const pinia = getActivePinia();
-        if (!pinia) {
-          return Promise.reject(error);
-        }
         const { useAuthStore } = await import('../stores/auth');
-        const authStore = useAuthStore();
+        const authStore = await getStoreSafely(() => useAuthStore(), 10, 50);
         const newToken = await authStore.refreshAccessToken();
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
         // Refresh failed, redirect to login
-        const pinia = getActivePinia();
-        if (pinia) {
+        try {
           const { useAuthStore } = await import('../stores/auth');
-          const authStore = useAuthStore();
+          const authStore = await getStoreSafely(() => useAuthStore(), 5, 50);
           await authStore.logout();
+        } catch (logoutError) {
+          // Ignore logout errors
         }
         window.location.href = '/#/auth/login';
         return Promise.reject(refreshError);

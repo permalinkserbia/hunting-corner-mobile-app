@@ -1,5 +1,5 @@
 import Pusher from 'pusher-js';
-import { getActivePinia } from 'pinia';
+import { getStoreSafely } from '../utils/pinia';
 
 const WS_URL = process.env.VUE_APP_WS_URL || 'wss://api.lovackikutak.rs/ws';
 const PUSHER_KEY = process.env.VUE_APP_PUSHER_KEY || '';
@@ -11,15 +11,10 @@ const subscriptions = new Map();
 async function initialize() {
   if (pusher) return;
 
-  const pinia = getActivePinia();
-  if (!pinia) {
-    console.warn('Pinia not initialized, cannot initialize WebSocket');
-    return;
-  }
-
-  const { useAuthStore } = await import('../stores/auth');
-  const authStore = useAuthStore();
-  if (!authStore.isAuthenticated) return;
+  try {
+    const { useAuthStore } = await import('../stores/auth');
+    const authStore = await getStoreSafely(() => useAuthStore(), 10, 50);
+    if (!authStore.isAuthenticated) return;
 
   // TODO: Configure Pusher with proper auth endpoint
   // For now, using public channel (backend should handle auth)
@@ -34,8 +29,12 @@ async function initialize() {
     // },
   });
 
-  // Subscribe to user's private channel
-  channel = pusher.subscribe(`private-user.${authStore.user.id}`);
+    // Subscribe to user's private channel
+    channel = pusher.subscribe(`private-user.${authStore.user.id}`);
+  } catch (error) {
+    console.warn('Pinia not initialized, cannot initialize WebSocket:', error);
+    return;
+  }
 }
 
 function subscribe(event, callback) {

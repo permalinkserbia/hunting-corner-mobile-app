@@ -105,21 +105,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { getActivePinia } from 'pinia';
+import { getStoreSafely } from '../utils/pinia';
 
 const router = useRouter();
 const $q = useQuasar();
 const leftDrawerOpen = ref(false);
 const tab = ref('timeline');
 
-// Store references - will be set in onMounted
+// Store references
 const authStoreRef = ref(null);
 const networkStoreRef = ref(null);
 
-// Computed properties that safely access stores
+// Computed properties
 const isAuthenticated = computed(() => {
   return authStoreRef.value?.isAuthenticated ?? false;
 });
@@ -129,19 +129,21 @@ const isOnline = computed(() => {
 });
 
 onMounted(async () => {
-  // Wait for Pinia to be ready
-  let pinia = getActivePinia();
-  if (!pinia) {
-    // Retry after a short delay
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    pinia = getActivePinia();
-  }
-
-  if (pinia) {
+  await nextTick();
+  await nextTick();
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  await new Promise((resolve) => setTimeout(resolve, 200)); // Longer initial delay
+  
+  try {
+    // Import and use stores - getStoreSafely will retry indefinitely for Pinia errors
     const { useAuthStore } = await import('../stores/auth');
     const { useNetworkStore } = await import('../stores/network');
-    authStoreRef.value = useAuthStore();
-    networkStoreRef.value = useNetworkStore();
+    
+    authStoreRef.value = await getStoreSafely(() => useAuthStore(), 1000, 100);
+    networkStoreRef.value = await getStoreSafely(() => useNetworkStore(), 1000, 100);
+  } catch (error) {
+    // This should only catch non-Pinia errors
+    console.error('Failed to initialize stores (non-Pinia error):', error);
   }
 });
 

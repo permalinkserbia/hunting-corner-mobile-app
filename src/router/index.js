@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import { getActivePinia } from 'pinia';
+import { getStoreSafely } from '../utils/pinia';
 
 const routes = [
   {
@@ -103,15 +103,6 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  // Skip auth check if Pinia is not ready yet
-  // This happens during initial router setup before app is fully mounted
-  const pinia = getActivePinia();
-  if (!pinia) {
-    // Allow navigation - components will handle their own auth checks
-    next();
-    return;
-  }
-
   // Only check auth for protected routes
   if (!to.meta.requiresAuth) {
     next();
@@ -120,7 +111,7 @@ router.beforeEach(async (to, from, next) => {
 
   try {
     const { useAuthStore } = await import('../stores/auth');
-    const authStore = useAuthStore();
+    const authStore = await getStoreSafely(() => useAuthStore(), 20, 50);
 
     if (!authStore.isAuthenticated) {
       next({ name: 'login', query: { redirect: to.fullPath } });

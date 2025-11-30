@@ -28,22 +28,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
 import apiService from '../services/api';
 import websocketService from '../services/websocket';
 import { formatRelativeTime } from '../utils/date';
+import { getStoreSafely } from '../utils/pinia';
 
 const route = useRoute();
-const authStore = useAuthStore();
-const currentUserId = authStore.user?.id;
+const authStoreRef = ref(null);
 const messages = ref([]);
 const newMessage = ref('');
 
+const currentUserId = computed(() => authStoreRef.value?.user?.id);
+
 onMounted(async () => {
-  await loadMessages();
-  subscribeToMessages();
+  await nextTick();
+  await nextTick();
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  
+  try {
+    const { useAuthStore } = await import('../stores/auth');
+    authStoreRef.value = await getStoreSafely(() => useAuthStore(), 20, 50);
+    await loadMessages();
+    subscribeToMessages();
+  } catch (error) {
+    console.error('Failed to initialize auth store:', error);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const { useAuthStore } = await import('../stores/auth');
+    authStoreRef.value = useAuthStore();
+    await loadMessages();
+    subscribeToMessages();
+  }
 });
 
 const loadMessages = async () => {

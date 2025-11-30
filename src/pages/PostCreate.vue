@@ -115,19 +115,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { usePostsStore } from '../stores/posts';
 import uploadService from '../services/upload';
 import storageService from '../services/storage';
 import { validateRequired } from '../utils/validators';
 import apiService from '../services/api';
 import { debouncedGetTagSuggestions } from '../utils/tags';
+import { getStoreSafely } from '../utils/pinia';
 
 const router = useRouter();
 const $q = useQuasar();
-const postsStore = usePostsStore();
+const postsStoreRef = ref(null);
 
 const content = ref('');
 const tags = ref([]);
@@ -142,6 +142,21 @@ const tagSuggestions = ref([]);
 const DRAFT_KEY = 'post_draft';
 
 onMounted(async () => {
+  await nextTick();
+  await nextTick();
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  
+  try {
+    const { usePostsStore } = await import('../stores/posts');
+    postsStoreRef.value = await getStoreSafely(() => usePostsStore(), 20, 50);
+  } catch (error) {
+    console.error('Failed to initialize posts store:', error);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const { usePostsStore } = await import('../stores/posts');
+    postsStoreRef.value = usePostsStore();
+  }
+  
   // Load draft
   const draft = await storageService.get(DRAFT_KEY);
   if (draft) {
@@ -249,6 +264,10 @@ const handleSubmit = async () => {
 };
 
 const publishPost = async (mediaUrls) => {
+  if (!postsStoreRef.value) {
+    throw new Error('Posts store not available');
+  }
+  
   const postData = {
     content: content.value,
     media: mediaUrls,
@@ -256,7 +275,7 @@ const publishPost = async (mediaUrls) => {
     yt_link: ytLink.value || null,
   };
 
-  const result = await postsStore.createPost(postData);
+  const result = await postsStoreRef.value.createPost(postData);
 
   if (result.success) {
     // Clear draft

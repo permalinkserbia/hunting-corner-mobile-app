@@ -90,14 +90,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useQuasar } from 'quasar';
-import { useAuthStore } from '../stores/auth';
 import apiService from '../services/api';
 import uploadService from '../services/upload';
+import { getStoreSafely } from '../utils/pinia';
 
 const $q = useQuasar();
-const authStore = useAuthStore();
+const authStoreRef = ref(null);
+
+const authStore = computed(() => authStoreRef.value);
 
 const darkMode = ref(false);
 const language = ref('sr');
@@ -107,10 +109,27 @@ const editName = ref('');
 const editBio = ref('');
 const avatarFile = ref(null);
 
-onMounted(() => {
-  editName.value = authStore.user?.name || '';
-  editBio.value = authStore.user?.bio || '';
-  darkMode.value = $q.dark.isActive;
+onMounted(async () => {
+  await nextTick();
+  await nextTick();
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  
+  try {
+    const { useAuthStore } = await import('../stores/auth');
+    authStoreRef.value = await getStoreSafely(() => useAuthStore(), 20, 50);
+    editName.value = authStore.value?.user?.name || '';
+    editBio.value = authStore.value?.user?.bio || '';
+    darkMode.value = $q.dark.isActive;
+  } catch (error) {
+    console.error('Failed to initialize auth store:', error);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const { useAuthStore } = await import('../stores/auth');
+    authStoreRef.value = useAuthStore();
+    editName.value = authStore.value?.user?.name || '';
+    editBio.value = authStore.value?.user?.bio || '';
+    darkMode.value = $q.dark.isActive;
+  }
 });
 
 const toggleTheme = (value) => {
@@ -123,8 +142,10 @@ const changeLanguage = (lang) => {
 };
 
 const saveProfile = async () => {
+  if (!authStoreRef.value) return;
+  
   try {
-    let avatarUrl = authStore.user?.avatar;
+    let avatarUrl = authStore.value?.user?.avatar;
     if (avatarFile.value) {
       avatarUrl = await uploadService.uploadFile(avatarFile.value);
     }
@@ -135,7 +156,7 @@ const saveProfile = async () => {
       avatar: avatarUrl,
     });
 
-    await authStore.fetchCurrentUser();
+    await authStoreRef.value.fetchCurrentUser();
     $q.notify({
       type: 'positive',
       message: 'Profile updated',

@@ -28,26 +28,30 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { getActivePinia } from 'pinia';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import PostCard from '../components/PostCard.vue';
+import { getStoreSafely } from '../utils/pinia';
 
 const postsStoreRef = ref(null);
 
 onMounted(async () => {
-  // Wait for Pinia to be ready
-  let pinia = getActivePinia();
-  if (!pinia) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    pinia = getActivePinia();
-  }
-
-  if (pinia) {
+  await nextTick();
+  await nextTick();
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  await new Promise((resolve) => setTimeout(resolve, 200)); // Longer initial delay
+  
+  try {
     const { usePostsStore } = await import('../stores/posts');
-    postsStoreRef.value = usePostsStore();
+    // getStoreSafely will retry indefinitely for Pinia errors
+    postsStoreRef.value = await getStoreSafely(() => usePostsStore(), 1000, 100);
     
-    await postsStoreRef.value.fetchPosts(1);
-    postsStoreRef.value.subscribeToRealtime();
+    if (postsStoreRef.value) {
+      await postsStoreRef.value.fetchPosts(1);
+      postsStoreRef.value.subscribeToRealtime();
+    }
+  } catch (error) {
+    // This should only catch non-Pinia errors
+    console.error('Failed to initialize posts store (non-Pinia error):', error);
   }
 });
 
