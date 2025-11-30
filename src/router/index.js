@@ -65,6 +65,16 @@ const routes = [
         component: () => import('src/pages/Search.vue'),
       },
       {
+        path: 'articles',
+        name: 'articles',
+        component: () => import('src/pages/Articles.vue'),
+      },
+      {
+        path: 'articles/:slug',
+        name: 'article-detail',
+        component: () => import('src/pages/ArticleDetail.vue'),
+      },
+      {
         path: 'chat',
         name: 'chat',
         component: () => import('src/pages/ChatList.vue'),

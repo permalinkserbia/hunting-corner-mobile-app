@@ -1,5 +1,12 @@
 <template>
-  <q-card class="q-mb-md" :class="{ 'cursor-pointer': clickable }" @click="handleCardClick">
+  <q-card 
+    class="q-mb-md" 
+    :class="{ 
+      'cursor-pointer': clickable,
+      'post-liked': post.liked 
+    }" 
+    @click="handleCardClick"
+  >
     <q-card-section>
       <div class="row items-center q-mb-sm">
         <q-avatar>
@@ -11,7 +18,53 @@
           <div class="text-caption text-grey">{{ formatRelativeTime(post.created_at) }}</div>
         </div>
         <q-space />
-        <q-btn flat round icon="more_vert" />
+        <q-btn-dropdown
+          flat
+          round
+          icon="more_vert"
+          @click.stop
+        >
+          <q-list style="min-width: 150px">
+            <q-item clickable v-close-popup @click="handleCopyLink">
+              <q-item-section avatar>
+                <q-icon name="content_copy" />
+              </q-item-section>
+              <q-item-section>Kopiraj link</q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="handleShare">
+              <q-item-section avatar>
+                <q-icon name="share" />
+              </q-item-section>
+              <q-item-section>Podeli</q-item-section>
+            </q-item>
+            <q-separator v-if="isOwnPost" />
+            <q-item 
+              v-if="isOwnPost" 
+              clickable 
+              v-close-popup 
+              @click="handleDelete"
+              class="text-negative"
+            >
+              <q-item-section avatar>
+                <q-icon name="delete" color="negative" />
+              </q-item-section>
+              <q-item-section>Obriši objavu</q-item-section>
+            </q-item>
+            <q-separator v-if="!isOwnPost" />
+            <q-item 
+              v-if="!isOwnPost" 
+              clickable 
+              v-close-popup 
+              @click="handleReport"
+              class="text-negative"
+            >
+              <q-item-section avatar>
+                <q-icon name="flag" color="negative" />
+              </q-item-section>
+              <q-item-section>Prijavi objavu</q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
       </div>
 
       <div class="text-body1 q-mb-sm">{{ post.content }}</div>
@@ -34,17 +87,17 @@
       </div>
 
       <q-carousel
-        v-if="post.media && post.media.length > 0"
+        v-if="filteredMedia && filteredMedia.length > 0"
         v-model="slide"
         swipeable
         animated
-        :arrows="post.media.length > 1"
-        :navigation="post.media.length > 1"
+        :arrows="filteredMedia.length > 1"
+        :navigation="filteredMedia.length > 1"
         class="rounded-borders q-mb-sm"
         style="height: 300px"
       >
         <q-carousel-slide
-          v-for="(media, index) in post.media"
+          v-for="(media, index) in filteredMedia"
           :key="index"
           :name="index"
         >
@@ -64,7 +117,7 @@
               </div>
             </template>
           </q-img>
-          <video v-else-if="media.type === 'video'" :src="getImageUrl(media.url)" controls class="full-width" />
+          <video v-else-if="media.type === 'video' && !isYouTubeUrl(media.url)" :src="getImageUrl(media.url)" controls class="full-width" />
         </q-carousel-slide>
       </q-carousel>
 
@@ -79,7 +132,7 @@
           ></iframe>
         </div>
       </div>
-      <div v-else-if="post.yt_link" class="q-mb-sm">
+      <div v-else-if="post.yt_link && !youtubeEmbedUrl" class="q-mb-sm">
         <q-card>
           <q-card-section>
             <div class="text-caption">YouTube Link</div>
@@ -95,12 +148,14 @@
         :icon="post.liked ? 'favorite' : 'favorite_border'"
         :color="post.liked ? 'red' : 'grey'"
         :label="post.likes_count || 0"
+        :class="{ 'text-red': post.liked }"
         @click.stop="handleLike"
-      />
+      >
+        <q-tooltip v-if="post.liked">Već ste lajkovali ovu objavu</q-tooltip>
+      </q-btn>
       <q-btn flat icon="comment" :label="post.comments_count || 0" @click.stop="handleComment" />
       <q-btn flat icon="share" @click.stop="$emit('share', post)" />
       <q-space />
-      <q-btn flat icon="bookmark_border" @click.stop />
     </q-card-actions>
   </q-card>
 </template>
@@ -108,10 +163,23 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
+import { useAuthStore } from '../stores/auth';
 import { formatRelativeTime } from '../utils/date';
 import { getImageUrl } from '../utils/image';
 
 const router = useRouter();
+const $q = useQuasar();
+
+// Get auth store - it should be initialized by boot file
+// Use try-catch to ensure component works even if authStore isn't ready
+let authStore = null;
+try {
+  authStore = useAuthStore();
+} catch (error) {
+  // Auth store not available, component will still work
+  console.warn('Auth store not available in PostCard:', error);
+}
 
 const props = defineProps({
   post: {
@@ -124,16 +192,62 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['like', 'unlike', 'comment', 'share']);
+const emit = defineEmits(['like', 'unlike', 'comment', 'share', 'delete', 'report']);
 
 const slide = ref(0);
 
+// Check if this is the user's own post
+const isOwnPost = computed(() => {
+  try {
+    if (!authStore || !authStore.user || !props.post.user) return false;
+    return authStore.user.id === props.post.user.id;
+  } catch (error) {
+    console.warn('Error checking if own post:', error);
+    return false;
+  }
+});
+
+// Filter out YouTube URLs from media array
+const filteredMedia = computed(() => {
+  if (!props.post?.media || !Array.isArray(props.post.media)) {
+    return [];
+  }
+  return props.post.media.filter(media => {
+    // Exclude YouTube URLs from media carousel
+    if (media.url && isYouTubeUrl(media.url)) {
+      return false;
+    }
+    return true;
+  });
+});
+
+// Check if URL is a YouTube URL
+function isYouTubeUrl(url) {
+  if (!url || typeof url !== 'string') {
+    return false;
+  }
+  return /youtube\.com|youtu\.be/.test(url);
+}
+
 // Computed property for YouTube embed URL
 const youtubeEmbedUrl = computed(() => {
-  if (!props.post?.yt_link) {
-    return null;
+  // Check post.yt_link first
+  if (props.post?.yt_link) {
+    const embedUrl = getYouTubeEmbedUrl(props.post.yt_link);
+    if (embedUrl) return embedUrl;
   }
-  return getYouTubeEmbedUrl(props.post.yt_link);
+  
+  // Also check if any media item is a YouTube URL
+  if (props.post?.media && Array.isArray(props.post.media)) {
+    for (const media of props.post.media) {
+      if (media.url && isYouTubeUrl(media.url)) {
+        const embedUrl = getYouTubeEmbedUrl(media.url);
+        if (embedUrl) return embedUrl;
+      }
+    }
+  }
+  
+  return null;
 });
 
 function handleImageError(event) {
@@ -207,6 +321,75 @@ const handleComment = () => {
     router.push({ name: 'post-detail', params: { id: props.post.id } });
   }
 };
+
+const handleCopyLink = async () => {
+  const postUrl = `${window.location.origin}/#/posts/${props.post.id}`;
+  try {
+    await navigator.clipboard.writeText(postUrl);
+    $q.notify({
+      type: 'positive',
+      message: 'Link kopiran u clipboard',
+      position: 'top',
+      icon: 'content_copy',
+    });
+  } catch (error) {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = postUrl;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      $q.notify({
+        type: 'positive',
+        message: 'Link kopiran u clipboard',
+        position: 'top',
+        icon: 'content_copy',
+      });
+    } catch (err) {
+      $q.notify({
+        type: 'negative',
+        message: 'Neuspešno kopiranje linka',
+        position: 'top',
+      });
+    } finally {
+      document.body.removeChild(textArea);
+    }
+  }
+};
+
+const handleShare = () => {
+  emit('share', props.post);
+};
+
+const handleDelete = () => {
+  $q.dialog({
+    title: 'Potvrdi brisanje',
+    message: 'Da li ste sigurni da želite da obrišete ovu objavu?',
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    emit('delete', props.post.id);
+  });
+};
+
+const handleReport = () => {
+  $q.dialog({
+    title: 'Prijavi objavu',
+    message: 'Da li želite da prijavite ovu objavu?',
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    emit('report', props.post.id);
+    $q.notify({
+      type: 'positive',
+      message: 'Objava je prijavljena',
+      position: 'top',
+    });
+  });
+};
 </script>
 
 <style scoped>
@@ -225,6 +408,10 @@ const handleComment = () => {
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+.post-liked {
+  border-left: 3px solid #f44336;
 }
 </style>
 

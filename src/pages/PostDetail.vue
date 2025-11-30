@@ -13,6 +13,7 @@
           @like="handleLike"
           @unlike="handleUnlike"
           @comment="scrollToComments"
+          @share="handleShare"
         />
 
         <!-- Comments Section -->
@@ -215,6 +216,73 @@ const scrollToComments = () => {
       commentsSection.scrollIntoView({ behavior: 'smooth' });
     }
   });
+};
+
+const handleShare = async (post) => {
+  const postUrl = `${window.location.origin}/#/posts/${post.id}`;
+  const shareText = post.content 
+    ? `${post.content.substring(0, 100)}${post.content.length > 100 ? '...' : ''}`
+    : 'Pogledajte ovu objavu na Lovački Kutak';
+  const shareTitle = `Objava od ${post.user?.name || 'korisnika'}`;
+
+  // Try Web Share API first (works on mobile devices)
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: shareTitle,
+        text: shareText,
+        url: postUrl,
+      });
+      $q.notify({
+        type: 'positive',
+        message: 'Objava podeljena',
+        position: 'top',
+      });
+      return;
+    } catch (error) {
+      // User cancelled or error occurred
+      if (error.name !== 'AbortError') {
+        console.error('Share error:', error);
+      }
+      // Fall through to clipboard method
+    }
+  }
+
+  // Fallback: Copy to clipboard
+  try {
+    await navigator.clipboard.writeText(postUrl);
+    $q.notify({
+      type: 'positive',
+      message: 'Link kopiran u clipboard',
+      position: 'top',
+      icon: 'content_copy',
+    });
+  } catch (error) {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = postUrl;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      $q.notify({
+        type: 'positive',
+        message: 'Link kopiran u clipboard',
+        position: 'top',
+        icon: 'content_copy',
+      });
+    } catch (err) {
+      $q.notify({
+        type: 'negative',
+        message: 'Neuspešno deljenje. Molimo kopirajte link ručno.',
+        position: 'top',
+      });
+    } finally {
+      document.body.removeChild(textArea);
+    }
+  }
 };
 
 const handleImageError = (event) => {

@@ -10,14 +10,33 @@
           aria-label="Menu"
           @click="leftDrawerOpen = !leftDrawerOpen"
         />
-        <q-toolbar-title> Lovački Kutak </q-toolbar-title>
+        <q-toolbar-title class="cursor-pointer" @click="$router.push('/timeline')">
+          Lovački Kutak
+        </q-toolbar-title>
+        <q-btn flat dense icon="article" label="Članci" @click="$router.push('/articles')" />
         <q-btn flat dense round icon="search" @click="$router.push('/search')" />
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
+    <q-drawer v-model="leftDrawerOpen" bordered>
       <q-list>
         <q-item-label header> Meni </q-item-label>
+        <q-item clickable v-ripple to="/timeline">
+          <q-item-section avatar>
+            <q-icon name="home" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Objave</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable v-ripple to="/articles">
+          <q-item-section avatar>
+            <q-icon name="article" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Članci</q-item-label>
+          </q-item-section>
+        </q-item>
         <q-item clickable v-ripple to="/profile" v-if="isAuthenticated">
           <q-item-section avatar>
             <q-icon name="person" />
@@ -49,16 +68,17 @@
       <router-view />
     </q-page-container>
 
-    <q-footer elevated v-if="isAuthenticated">
+    <q-footer elevated>
       <q-tabs v-model="tab" class="text-white">
         <q-route-tab
           name="timeline"
           icon="home"
-          label="Aktivnosti"
+          label="Objave"
           to="/timeline"
           exact
         />
         <q-route-tab
+          v-if="isAuthenticated"
           name="post"
           icon="add_circle"
           label="Objavi"
@@ -67,6 +87,7 @@
         />
         <q-route-tab name="ads" icon="store" label="Oglasi" to="/ads" exact />
         <q-route-tab
+          v-if="isAuthenticated"
           name="notifications"
           icon="notifications"
           label="Obaveštenja"
@@ -74,10 +95,19 @@
           exact
         />
         <q-route-tab
+          v-if="isAuthenticated"
           name="profile"
           icon="person"
           label="Profil"
           to="/profile"
+          exact
+        />
+        <q-route-tab
+          v-if="!isAuthenticated"
+          name="login"
+          icon="login"
+          label="Prijavi se"
+          to="/auth/login"
           exact
         />
       </q-tabs>
