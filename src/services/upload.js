@@ -22,27 +22,23 @@ const uploadService = {
         fileToUpload = await compressImage(file);
       }
 
-      // Get signed URL
-      const { upload_url, public_url, fields } = await this.getSignedUrl(
+      // Get upload info (Laravel direct-upload endpoint + storage path)
+      const { upload_url, public_url } = await this.getSignedUrl(
         fileToUpload.name,
         fileToUpload.type
       );
 
-      // Upload to S3-compatible storage
+      // Upload to Laravel, which will then store the file on S3-compatible storage
       const formData = new FormData();
-      if (fields) {
-        Object.keys(fields).forEach((key) => {
-          formData.append(key, fields[key]);
-        });
-      }
       formData.append('file', fileToUpload);
 
       await fetch(upload_url, {
         method: 'POST',
         body: formData,
-        // Note: Progress tracking requires XMLHttpRequest
       });
 
+      // Backend returns a relative storage path (e.g. uploads/2025/12/uuid.jpg)
+      // API that creates posts will turn this into an absolute URL using media_url
       return public_url;
     } catch (error) {
       console.error('Upload error:', error);

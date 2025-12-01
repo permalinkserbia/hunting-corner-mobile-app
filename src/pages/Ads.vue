@@ -28,10 +28,13 @@
         @click="$router.push(`/ads/${ad.id}`)"
       >
         <q-item-section avatar>
-          <q-img
+          <LazyImage
             v-if="ad.images && ad.images[0]"
             :src="ad.images[0].url"
-            style="width: 80px; height: 80px"
+            :width="80"
+            :height="80"
+            fit="cover"
+            :show-spinner="false"
             class="rounded-borders"
           />
           <q-icon v-else name="image" size="80px" color="grey" />
@@ -91,6 +94,7 @@
 import { ref, onMounted } from 'vue';
 import { useAdsStore } from '../stores/ads';
 import { debounce } from 'lodash-es';
+import LazyImage from '../components/LazyImage.vue';
 
 const adsStore = useAdsStore();
 const searchQuery = ref('');

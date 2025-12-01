@@ -50,9 +50,13 @@
               >
                 <q-item-section avatar>
                   <q-avatar>
-                    <img
+                    <LazyImage
                       v-if="comment.user?.avatar"
                       :src="getImageUrl(comment.user.avatar)"
+                      :width="40"
+                      :height="40"
+                      fit="cover"
+                      :show-spinner="false"
                       @error="handleImageError"
                     />
                     <q-icon v-else name="person" />
@@ -100,6 +104,7 @@ import { ref, onMounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import PostCard from '../components/PostCard.vue';
+import LazyImage from '../components/LazyImage.vue';
 import { getStoreSafely } from '../utils/pinia';
 import { formatRelativeTime } from '../utils/date';
 import { getImageUrl } from '../utils/image';

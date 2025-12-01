@@ -17,18 +17,14 @@
             class="q-pa-md"
           >
             <q-item-section avatar>
-              <q-img
+              <LazyImage
                 :src="article.featured_image"
-                style="width: 100px; height: 100px"
+                :width="100"
+                :height="100"
+                fit="cover"
+                :show-spinner="false"
                 class="rounded-borders"
-                loading="lazy"
-              >
-                <template v-slot:error>
-                  <div class="absolute-full flex flex-center bg-grey-3">
-                    <q-icon name="image" size="32px" color="grey" />
-                  </div>
-                </template>
-              </q-img>
+              />
             </q-item-section>
 
             <q-item-section>
@@ -70,6 +66,7 @@
 import { ref, onMounted, nextTick } from 'vue';
 import apiService from '../services/api';
 import { formatRelativeTime } from '../utils/date';
+import LazyImage from '../components/LazyImage.vue';
 
 const articles = ref([]);
 const loading = ref(false);

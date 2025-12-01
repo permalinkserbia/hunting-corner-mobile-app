@@ -6,18 +6,13 @@
 
     <div v-else-if="article">
       <!-- Featured Image -->
-      <q-img
+      <LazyImage
         v-if="article.featured_image"
         :src="article.featured_image"
-        style="height: 250px"
-        loading="lazy"
-      >
-        <template v-slot:error>
-          <div class="absolute-full flex flex-center bg-grey-3">
-            <q-icon name="image" size="48px" color="grey" />
-          </div>
-        </template>
-      </q-img>
+        :height="250"
+        fit="cover"
+        error-text="Slika nije dostupna"
+      />
 
       <q-card>
         <q-card-section>
@@ -39,9 +34,13 @@
           <div class="row items-center q-gutter-sm q-mb-md text-caption text-grey">
             <div class="row items-center">
               <q-avatar size="24px">
-                <img
+                <LazyImage
                   v-if="article.author?.avatar"
                   :src="article.author.avatar"
+                  :width="24"
+                  :height="24"
+                  fit="cover"
+                  :show-spinner="false"
                   @error="handleImageError"
                 />
                 <q-icon v-else name="person" size="16px" />
@@ -78,7 +77,7 @@
                 :key="index"
                 :name="index"
               >
-                <q-img :src="image" fit="contain" loading="lazy" />
+                <LazyImage :src="image" :height="400" fit="contain" />
               </q-carousel-slide>
             </q-carousel>
           </div>
@@ -103,9 +102,13 @@
             >
               <q-item-section avatar>
                 <q-avatar>
-                  <img
+                  <LazyImage
                     v-if="comment.user?.avatar"
                     :src="comment.user.avatar"
+                    :width="40"
+                    :height="40"
+                    fit="cover"
+                    :show-spinner="false"
                     @error="handleImageError"
                   />
                   <q-icon v-else name="person" />
@@ -146,11 +149,13 @@
               @click="$router.push({ name: 'article-detail', params: { slug: related.slug } })"
             >
               <q-item-section avatar>
-                <q-img
+                <LazyImage
                   :src="related.featured_image"
-                  style="width: 80px; height: 80px"
+                  :width="80"
+                  :height="80"
+                  fit="cover"
+                  :show-spinner="false"
                   class="rounded-borders"
-                  loading="lazy"
                 />
               </q-item-section>
               <q-item-section>
@@ -181,6 +186,7 @@ import { ref, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import apiService from '../services/api';
 import { formatRelativeTime } from '../utils/date';
+import LazyImage from '../components/LazyImage.vue';
 
 const route = useRoute();
 const article = ref(null);

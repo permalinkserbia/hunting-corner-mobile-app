@@ -10,7 +10,15 @@
     <q-card-section>
       <div class="row items-center q-mb-sm">
         <q-avatar>
-          <img v-if="post.user?.avatar" :src="getImageUrl(post.user.avatar)" @error="handleImageError" />
+          <LazyImage
+            v-if="post.user?.avatar"
+            :src="getImageUrl(post.user.avatar)"
+            :width="40"
+            :height="40"
+            fit="cover"
+            :show-spinner="false"
+            @error="handleImageError"
+          />
           <q-icon v-else name="person" />
         </q-avatar>
         <div class="q-ml-sm">
@@ -101,22 +109,15 @@
           :key="index"
           :name="index"
         >
-          <q-img
+          <LazyImage
             v-if="media.type === 'image'"
             :src="getImageUrl(media.url)"
+            :width="'100%'"
+            :height="300"
             fit="cover"
+            error-text="Slika nije dostupna"
             @error="handleImageError"
-            loading="lazy"
-          >
-            <template v-slot:error>
-              <div class="absolute-full flex flex-center bg-grey-3 text-grey-8">
-                <div class="text-center">
-                  <q-icon name="broken_image" size="48px" />
-                  <div class="text-caption q-mt-sm">Slika nije dostupna</div>
-                </div>
-              </div>
-            </template>
-          </q-img>
+          />
           <video v-else-if="media.type === 'video' && !isYouTubeUrl(media.url)" :src="getImageUrl(media.url)" controls class="full-width" />
         </q-carousel-slide>
       </q-carousel>
@@ -167,6 +168,7 @@ import { useQuasar } from 'quasar';
 import { useAuthStore } from '../stores/auth';
 import { formatRelativeTime } from '../utils/date';
 import { getImageUrl } from '../utils/image';
+import LazyImage from './LazyImage.vue';
 
 const router = useRouter();
 const $q = useQuasar();
