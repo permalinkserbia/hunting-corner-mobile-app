@@ -22,14 +22,14 @@ const uploadService = {
         fileToUpload = await compressImage(file);
       }
 
-      // Get upload info (Laravel direct-upload endpoint + storage path)
-      const { upload_url, public_url, fields } = await this.getSignedUrl(
+      // Get upload info (storage path + any extra fields)
+      const { public_url, fields } = await this.getSignedUrl(
         fileToUpload.name,
         fileToUpload.type
       );
 
-      // Upload to Laravel, which will then store the file on S3-compatible storage
-      // at the same path returned as public_url.
+      // Upload to Laravel API (authorized via apiService), which will then
+      // store the file on S3-compatible storage at the same path (public_url).
       const formData = new FormData();
       if (fields) {
         Object.keys(fields).forEach((key) => {
@@ -38,9 +38,10 @@ const uploadService = {
       }
       formData.append('file', fileToUpload);
 
-      await fetch(upload_url, {
-        method: 'POST',
-        body: formData,
+      await apiService.post('/uploads/direct', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       // Backend returns a relative storage path (e.g. uploads/2025/12/uuid.jpg)
