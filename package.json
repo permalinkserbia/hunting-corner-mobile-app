@@ -22,35 +22,35 @@
   "dependencies": {
     "@quasar/extras": "^1.16.9",
     "axios": "^1.6.0",
+    "date-fns": "^2.30.0",
     "localforage": "^1.10.0",
+    "lodash-es": "^4.17.21",
+    "pinia": "^2.1.7",
     "pusher-js": "^8.4.0-rc2",
     "vue": "^3.3.4",
-    "vue-router": "^4.2.5",
-    "pinia": "^2.1.7",
-    "date-fns": "^2.30.0",
-    "lodash-es": "^4.17.21"
+    "vue-router": "^4.2.5"
   },
   "devDependencies": {
-    "@quasar/app-vite": "^1.4.0",
-    "@capacitor/cli": "^5.5.0",
-    "@capacitor/android": "^5.5.0",
-    "@capacitor/core": "^5.5.0",
-    "@capacitor/ios": "^5.5.0",
-    "@capacitor/app": "^5.0.6",
-    "@capacitor/network": "^5.0.6",
-    "@capacitor/push-notifications": "^5.0.6",
-    "@capacitor/status-bar": "^5.0.6",
-    "@capacitor/preferences": "^5.0.6",
-    "@vue/test-utils": "^2.4.2",
     "@babel/core": "^7.23.3",
     "@babel/preset-env": "^7.23.3",
+    "@capacitor/android": "^5.7.8",
+    "@capacitor/app": "^5.0.6",
+    "@capacitor/cli": "^5.5.0",
+    "@capacitor/core": "^5.5.0",
+    "@capacitor/ios": "^5.5.0",
+    "@capacitor/network": "^5.0.6",
+    "@capacitor/preferences": "^5.0.6",
+    "@capacitor/push-notifications": "^5.0.6",
+    "@capacitor/status-bar": "^5.0.6",
+    "@quasar/app-vite": "^1.4.0",
+    "@vue/test-utils": "^2.4.2",
     "@vue/vue3-jest": "^29.2.6",
     "babel-jest": "^29.7.0",
     "cypress": "^13.6.0",
     "eslint": "^8.54.0",
-    "eslint-plugin-vue": "^9.18.1",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.1",
+    "eslint-plugin-vue": "^9.18.1",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "prettier": "^3.1.0"
@@ -70,4 +70,3 @@
     "npm": ">= 8.0.0"
   }
 }
-
