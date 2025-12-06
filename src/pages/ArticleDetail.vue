@@ -246,12 +246,57 @@ const handleImageError = (event) => {
   margin-bottom: 1rem;
 }
 
-.article-content :deep(h1),
-.article-content :deep(h2),
-.article-content :deep(h3) {
+.article-content :deep(h1) {
+  font-size: 1.5rem;
   margin-top: 1.5rem;
   margin-bottom: 1rem;
   font-weight: bold;
+  line-height: 1.4;
+}
+
+.article-content :deep(h2) {
+  font-size: 1.25rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.875rem;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+.article-content :deep(h3) {
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  margin-bottom: 0.75rem;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+/* Make headings smaller on mobile */
+@media (max-width: 768px) {
+  .article-content :deep(h1) {
+    font-size: 1.25rem;
+  }
+  
+  .article-content :deep(h2) {
+    font-size: 1.1rem;
+  }
+  
+  .article-content :deep(h3) {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .article-content :deep(h1) {
+    font-size: 1.1rem;
+  }
+  
+  .article-content :deep(h2) {
+    font-size: 1rem;
+  }
+  
+  .article-content :deep(h3) {
+    font-size: 0.95rem;
+  }
 }
 
 .video-container {
