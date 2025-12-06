@@ -28,7 +28,7 @@
           />
 
           <!-- Title -->
-          <div class="text-h5 q-mt-md q-mb-sm">{{ article.title }}</div>
+          <div class="article-title-detail q-mt-md q-mb-sm">{{ article.title }}</div>
 
           <!-- Meta Info -->
           <div class="row items-center q-gutter-sm q-mb-md text-caption text-grey">
@@ -268,6 +268,27 @@ const handleImageError = (event) => {
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+.article-title-detail {
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+/* Make titles smaller on mobile */
+@media (max-width: 768px) {
+  .article-title-detail {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+}
+
+@media (max-width: 480px) {
+  .article-title-detail {
+    font-size: 1.1rem;
+    line-height: 1.3;
+  }
 }
 </style>
 

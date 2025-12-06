@@ -2,7 +2,7 @@
   <q-page class="flex flex-center">
     <q-card class="q-pa-md" style="min-width: 350px">
       <q-card-section>
-        <div class="text-h6 text-center">Registracija</div>
+        <div class="text-h6 text-center text-primary">Registracija</div>
       </q-card-section>
 
       <q-card-section>
@@ -49,11 +49,10 @@
           </div>
 
           <div class="text-center">
-            <q-btn
-              flat
-              label="Već imate nalog? Prijavite se"
-              @click="$router.push('/auth/login')"
-            />
+            <div class="text-body2">
+              Već imate nalog? 
+              <span class="text-primary text-weight-bold" style="cursor: pointer;" @click="$router.push('/auth/login')">Prijavite se</span>
+            </div>
           </div>
         </q-form>
       </q-card-section>

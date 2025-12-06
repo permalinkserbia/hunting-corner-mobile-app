@@ -28,7 +28,7 @@
             </q-item-section>
 
             <q-item-section>
-              <q-item-label class="text-weight-bold">{{ article.title }}</q-item-label>
+              <q-item-label class="text-weight-bold article-title">{{ article.title }}</q-item-label>
               <q-item-label caption lines="2">
                 {{ article.excerpt || article.content?.substring(0, 100) + '...' }}
               </q-item-label>
@@ -122,6 +122,21 @@ const formatDate = (dateString) => {
     month: 'long',
     day: 'numeric',
   });
-};
+  };
 </script>
+
+<style scoped>
+.article-title {
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+/* Make titles even smaller on very small screens */
+@media (max-width: 480px) {
+  .article-title {
+    font-size: 0.9rem;
+    line-height: 1.3;
+  }
+}
+</style>
 
