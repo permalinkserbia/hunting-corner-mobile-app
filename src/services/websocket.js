@@ -1,9 +1,10 @@
 import Pusher from 'pusher-js';
 import { getStoreSafely } from '../utils/pinia';
 
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'https://lovackikutak.rs/api';
-const PUSHER_KEY = process.env.VUE_APP_PUSHER_KEY || '';
-const PUSHER_CLUSTER = process.env.VUE_APP_PUSHER_CLUSTER || 'eu';
+// Hardcoded configuration - update these values if backend changes
+const API_BASE_URL = 'https://lovackikutak.rs/api';
+const PUSHER_KEY = '66cdd20794488bcda4f4';
+const PUSHER_CLUSTER = 'eu';
 
 let pusher = null;
 let channel = null;
@@ -22,8 +23,9 @@ async function initialize() {
       return;
     }
 
-    if (!PUSHER_KEY) {
-      console.error('PUSHER_KEY not configured. Please set VUE_APP_PUSHER_KEY in your .env file');
+    if (!PUSHER_KEY || PUSHER_KEY === '') {
+      console.warn('PUSHER_KEY not configured. Please set VUE_APP_PUSHER_KEY in your .env file');
+      console.warn('WebSocket/real-time features will not work without Pusher configuration');
       return;
     }
 
