@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "144358273080",
+    "project_id": "lovacki-kutak",
+    "storage_bucket": "lovacki-kutak.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:144358273080:android:5296c6e8c4046d4167b6cd",
+        "android_client_info": {
+          "package_name": "rs.lovackikutak.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_JeARBvYLVXi4Xwc6hCU2ss5-myC33A0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

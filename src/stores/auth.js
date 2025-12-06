@@ -22,6 +22,16 @@ export const useAuthStore = defineStore('auth', () => {
         refreshToken.value = storedRefresh;
         user.value = JSON.parse(storedUser);
         apiService.setAuthToken(storedToken);
+
+        // Initialize push notifications if user is already logged in
+        if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform()) {
+          try {
+            const pushService = await import('../services/push-notifications');
+            await pushService.default.initialize();
+          } catch (error) {
+            console.error('Failed to initialize push notifications:', error);
+          }
+        }
       }
     } catch (error) {
       console.error('Auth initialization error:', error);
@@ -43,6 +53,16 @@ export const useAuthStore = defineStore('auth', () => {
       await storageService.set('user', JSON.stringify(userData));
 
       apiService.setAuthToken(access_token);
+
+      // Initialize push notifications after login
+      if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform()) {
+        try {
+          const pushService = await import('../services/push-notifications');
+          await pushService.default.initialize();
+        } catch (error) {
+          console.error('Failed to initialize push notifications after login:', error);
+        }
+      }
 
       return { success: true };
     } catch (error) {
@@ -70,6 +90,16 @@ export const useAuthStore = defineStore('auth', () => {
       await storageService.set('user', JSON.stringify(newUser));
 
       apiService.setAuthToken(access_token);
+
+      // Initialize push notifications after registration
+      if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform()) {
+        try {
+          const pushService = await import('../services/push-notifications');
+          await pushService.default.initialize();
+        } catch (error) {
+          console.error('Failed to initialize push notifications after registration:', error);
+        }
+      }
 
       return { success: true };
     } catch (error) {

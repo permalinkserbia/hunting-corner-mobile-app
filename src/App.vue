@@ -7,6 +7,7 @@ import { onMounted, nextTick } from 'vue';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
 import { getStoreSafely } from './utils/pinia';
+import pushService from './services/push-notifications';
 
 let networkStore = null;
 
@@ -42,6 +43,22 @@ onMounted(async () => {
       window.addEventListener('online', () => networkStore.setStatus(true));
       window.addEventListener('offline', () => networkStore.setStatus(false));
     }
+  }
+
+  // Initialize push notifications after a short delay to ensure auth is ready
+  if (Capacitor.isNativePlatform()) {
+    setTimeout(async () => {
+      try {
+        const { useAuthStore } = await import('./stores/auth');
+        const authStore = await getStoreSafely(() => useAuthStore(), 10, 50);
+        
+        if (authStore && authStore.isAuthenticated) {
+          await pushService.initialize();
+        }
+      } catch (error) {
+        console.error('Failed to initialize push notifications:', error);
+      }
+    }, 1000);
   }
 });
 </script>

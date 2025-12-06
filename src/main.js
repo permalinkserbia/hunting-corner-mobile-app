@@ -25,5 +25,10 @@ app.use(Quasar, {
   lang: quasarLang,
 });
 
+// Make router available globally for push notifications
+if (typeof window !== 'undefined') {
+  window.$router = router;
+}
+
 app.mount('#q-app');
 

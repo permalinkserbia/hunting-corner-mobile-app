@@ -1,8 +1,9 @@
 import Pusher from 'pusher-js';
 import { getStoreSafely } from '../utils/pinia';
 
-const WS_URL = process.env.VUE_APP_WS_URL || 'wss://api.lovackikutak.rs/ws';
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'https://lovackikutak.rs/api';
 const PUSHER_KEY = process.env.VUE_APP_PUSHER_KEY || '';
+const PUSHER_CLUSTER = process.env.VUE_APP_PUSHER_CLUSTER || 'eu';
 
 let pusher = null;
 let channel = null;
@@ -21,22 +22,36 @@ async function initialize() {
       return;
     }
 
-    // TODO: Configure Pusher with proper auth endpoint
-    // For now, using public channel (backend should handle auth)
-    pusher = new Pusher(PUSHER_KEY || 'default-key', {
-      cluster: process.env.VUE_APP_PUSHER_CLUSTER || 'eu',
+    if (!PUSHER_KEY) {
+      console.error('PUSHER_KEY not configured. Please set VUE_APP_PUSHER_KEY in your .env file');
+      return;
+    }
+
+    // Configure Pusher with proper auth endpoint
+    pusher = new Pusher(PUSHER_KEY, {
+      cluster: PUSHER_CLUSTER,
       encrypted: true,
-      // authEndpoint: `${API_BASE_URL}/broadcasting/auth`,
-      // auth: {
-      //   headers: {
-      //     Authorization: `Bearer ${authStore.accessToken}`,
-      //   },
-      // },
+      authEndpoint: `${API_BASE_URL}/broadcasting/auth`,
+      auth: {
+        headers: {
+          Authorization: `Bearer ${authStore.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      },
     });
 
     // Subscribe to user's private channel for notifications
     channel = pusher.subscribe(`private-user.${authStore.user.id}`);
     channels.set('user', channel);
+    
+    // Handle subscription events
+    channel.bind('pusher:subscription_succeeded', () => {
+      console.log('Successfully subscribed to user channel:', authStore.user.id);
+    });
+    
+    channel.bind('pusher:subscription_error', (error) => {
+      console.error('Failed to subscribe to user channel:', error);
+    });
     
     // Also subscribe to timeline channel for real-time updates
     const timelineChannel = pusher.subscribe('timeline');
@@ -45,8 +60,21 @@ async function initialize() {
     // Subscribe to ads channel for new ad notifications
     const adsChannel = pusher.subscribe('ads');
     channels.set('ads', adsChannel);
+    
+    // Handle connection events
+    pusher.connection.bind('connected', () => {
+      console.log('Pusher connected');
+    });
+    
+    pusher.connection.bind('error', (error) => {
+      console.error('Pusher connection error:', error);
+    });
+    
+    pusher.connection.bind('disconnected', () => {
+      console.warn('Pusher disconnected');
+    });
   } catch (error) {
-    console.warn('Failed to initialize WebSocket:', error);
+    console.error('Failed to initialize WebSocket:', error);
     return;
   }
 }

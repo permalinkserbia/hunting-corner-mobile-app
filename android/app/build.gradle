@@ -52,9 +52,22 @@ apply from: 'capacitor.build.gradle'
 
 try {
     def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
+    if (servicesJSON.exists() && servicesJSON.text) {
+        // Check if package name matches
+        def json = new groovy.json.JsonSlurper().parse(servicesJSON)
+        def packageName = json.client?.find { it.client_info?.android_client_info?.package_name }?.client_info?.android_client_info?.package_name
+        
+        if (packageName == android.defaultConfig.applicationId) {
+            apply plugin: 'com.google.gms.google-services'
+            logger.info("google-services.json loaded successfully for package: ${packageName}")
+        } else {
+            logger.warn("google-services.json package name mismatch. Expected: ${android.defaultConfig.applicationId}, Found: ${packageName}")
+            logger.warn("Push Notifications won't work. Please update google-services.json or add Android app in Firebase Console with package name: ${android.defaultConfig.applicationId}")
+        }
+    } else {
+        logger.info("google-services.json not found or empty. Push Notifications won't work")
     }
 } catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+    logger.warn("Error processing google-services.json: ${e.message}")
+    logger.warn("Push Notifications won't work without proper Firebase configuration")
 }
