@@ -6,6 +6,7 @@ const PUSHER_KEY = process.env.VUE_APP_PUSHER_KEY || '';
 
 let pusher = null;
 let channel = null;
+const channels = new Map(); // Store multiple channels
 const subscriptions = new Map();
 
 async function initialize() {
@@ -33,21 +34,58 @@ async function initialize() {
       // },
     });
 
-    // Subscribe to user's private channel
+    // Subscribe to user's private channel for notifications
     channel = pusher.subscribe(`private-user.${authStore.user.id}`);
+    channels.set('user', channel);
+    
+    // Also subscribe to timeline channel for real-time updates
+    const timelineChannel = pusher.subscribe('timeline');
+    channels.set('timeline', timelineChannel);
+    
+    // Subscribe to ads channel for new ad notifications
+    const adsChannel = pusher.subscribe('ads');
+    channels.set('ads', adsChannel);
+    
+    // Also subscribe to timeline channel for real-time updates
+    const timelineChannel = pusher.subscribe('timeline');
+    
+    // Subscribe to ads channel for new ad notifications
+    const adsChannel = pusher.subscribe('ads');
   } catch (error) {
     console.warn('Failed to initialize WebSocket:', error);
     return;
   }
 }
 
-async function subscribe(event, callback) {
-  if (!channel) {
+async function subscribe(event, callback, channelName = 'user') {
+  if (!pusher) {
     await initialize();
   }
 
-  if (!channel) {
+  if (!pusher) {
     console.warn('WebSocket not initialized');
+    return;
+  }
+
+  // Get or create channel
+  let targetChannel = channels.get(channelName);
+  if (!targetChannel) {
+    if (channelName === 'user') {
+      const { useAuthStore } = await import('../stores/auth');
+      const authStore = await getStoreSafely(() => useAuthStore());
+      if (authStore && authStore.user) {
+        targetChannel = pusher.subscribe(`private-user.${authStore.user.id}`);
+        channels.set('user', targetChannel);
+        channel = targetChannel; // Keep backward compatibility
+      }
+    } else {
+      targetChannel = pusher.subscribe(channelName);
+      channels.set(channelName, targetChannel);
+    }
+  }
+
+  if (!targetChannel) {
+    console.warn(`Channel ${channelName} not available`);
     return;
   }
 
@@ -55,17 +93,27 @@ async function subscribe(event, callback) {
     callback(data);
   };
 
-  channel.bind(event, handler);
-  subscriptions.set(event, handler);
+  targetChannel.bind(event, handler);
+  const key = `${channelName}:${event}`;
+  subscriptions.set(key, { handler, channel: targetChannel });
 }
 
-function unsubscribe(event) {
-  if (!channel) return;
-
-  const handler = subscriptions.get(event);
-  if (handler) {
-    channel.unbind(event, handler);
-    subscriptions.delete(event);
+function unsubscribe(event, channelName = 'user') {
+  const key = `${channelName}:${event}`;
+  const subscription = subscriptions.get(key);
+  if (subscription) {
+    subscription.channel.unbind(event, subscription.handler);
+    subscriptions.delete(key);
+  }
+  
+  // Backward compatibility
+  if (channelName === 'user' && channel) {
+    const oldKey = event;
+    const oldSub = subscriptions.get(oldKey);
+    if (oldSub) {
+      channel.unbind(event, oldSub);
+      subscriptions.delete(oldKey);
+    }
   }
 }
 
@@ -74,6 +122,7 @@ function disconnect() {
     pusher.disconnect();
     pusher = null;
     channel = null;
+    channels.clear();
     subscriptions.clear();
   }
 }

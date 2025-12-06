@@ -101,13 +101,14 @@
         animated
         :arrows="filteredMedia.length > 1"
         :navigation="filteredMedia.length > 1"
-        class="rounded-borders q-mb-sm"
+        class="rounded-borders q-mb-sm post-carousel"
         style="height: 300px"
       >
         <q-carousel-slide
           v-for="(media, index) in filteredMedia"
           :key="index"
           :name="index"
+          class="post-carousel-slide"
         >
           <LazyImage
             v-if="media.type === 'image'"
@@ -414,6 +415,59 @@ const handleReport = () => {
 
 .post-liked {
   border-left: 3px solid #f44336;
+}
+
+/* Prevent carousel from interfering with vertical page scroll */
+.post-carousel {
+  /* Allow both horizontal (for carousel) and vertical (for page) scrolling */
+  touch-action: pan-x pan-y pinch-zoom;
+  /* Prevent any internal scrolling */
+  overflow: hidden;
+}
+
+.post-carousel-slide {
+  /* Ensure slides don't have scrollable content */
+  overflow: hidden !important;
+  touch-action: pan-x pan-y;
+}
+
+.post-carousel :deep(.q-carousel__slide) {
+  overflow: hidden !important;
+  /* Allow vertical scrolling to pass through */
+  touch-action: pan-x pan-y;
+  /* Prevent any scroll behavior on the slide itself */
+  overscroll-behavior: contain;
+}
+
+.post-carousel :deep(.q-carousel__slide__content) {
+  overflow: hidden !important;
+  touch-action: pan-x pan-y;
+  height: 100%;
+  width: 100%;
+}
+
+.post-carousel :deep(img) {
+  /* Prevent image drag/select but allow touch events for scrolling */
+  touch-action: pan-x pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+  /* Prevent image from being draggable */
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  /* Prevent image from having its own scroll */
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Ensure carousel track allows proper touch handling */
+.post-carousel :deep(.q-carousel__track) {
+  touch-action: pan-x pan-y;
 }
 </style>
 

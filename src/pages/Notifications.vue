@@ -63,6 +63,7 @@ const getNotificationIcon = (type) => {
   const icons = {
     like: 'favorite',
     comment: 'comment',
+    ad_created: 'campaign',
     follow: 'person_add',
     message: 'message',
     default: 'notifications',
@@ -77,7 +78,9 @@ const handleNotificationClick = async (notification) => {
 
   // Deep link handling
   if (notification.data?.post_id) {
-    router.push(`/timeline#post-${notification.data.post_id}`);
+    router.push({ name: 'post-detail', params: { id: notification.data.post_id } });
+  } else if (notification.data?.ad_id) {
+    router.push({ name: 'ad-detail', params: { id: notification.data.ad_id } });
   } else if (notification.data?.user_id) {
     router.push(`/profile/${notification.data.user_id}`);
   } else if (notification.data?.chat_id) {

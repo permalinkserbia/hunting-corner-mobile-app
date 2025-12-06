@@ -189,14 +189,31 @@ const handleAddComment = async () => {
       if (!post.value.comments) {
         post.value.comments = [];
       }
+      // Add the new comment to the array
       post.value.comments.push(result.data);
+      // Ensure comments are sorted by created_at (ascending - oldest first)
+      post.value.comments.sort((a, b) => {
+        return new Date(a.created_at) - new Date(b.created_at);
+      });
+      // Update comment count
       post.value.comments_count = (post.value.comments_count || 0) + 1;
+      // Clear the form to allow adding another comment
       newComment.value = '';
 
       $q.notify({
         type: 'positive',
         message: 'Komentar dodat',
+        timeout: 2000,
       });
+
+      // Scroll to the newly added comment after a short delay
+      await nextTick();
+      setTimeout(() => {
+        const commentsSection = document.querySelector('.q-card');
+        if (commentsSection) {
+          commentsSection.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+      }, 100);
     } else {
       $q.notify({
         type: 'negative',
@@ -204,6 +221,7 @@ const handleAddComment = async () => {
       });
     }
   } catch (error) {
+    console.error('Error adding comment:', error);
     $q.notify({
       type: 'negative',
       message: 'Došlo je do greške',

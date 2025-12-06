@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import { Notify } from 'quasar';
 import apiService from '../services/api';
 import websocketService from '../services/websocket';
 
@@ -53,6 +54,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
   function subscribeToRealtime() {
     if (websocketSubscribed.value) return;
 
+    // Listen for general notification.created events
     websocketService.subscribe('notification.created', (data) => {
       if (data.notification) {
         notifications.value.unshift(data.notification);
@@ -62,13 +64,74 @@ export const useNotificationsStore = defineStore('notifications', () => {
       }
     });
 
+    // Listen for post comment notifications
+    websocketService.subscribe('post.comment.created', (data) => {
+      if (data.notification) {
+        notifications.value.unshift(data.notification);
+        if (!data.notification.read_at) {
+          unreadCount.value++;
+        }
+        // Show push notification
+        showNotification(data.notification);
+      }
+    });
+
+    // Listen for post like notifications
+    websocketService.subscribe('post.liked', (data) => {
+      if (data.notification) {
+        notifications.value.unshift(data.notification);
+        if (!data.notification.read_at) {
+          unreadCount.value++;
+        }
+        // Show push notification
+        showNotification(data.notification);
+      }
+    });
+
+    // Listen for new ad created events
+    websocketService.subscribe('ad.created', (data) => {
+      // For ads, we can show a notification to all users viewing the ads page
+      // The notification will be handled by the ads store or component
+      console.log('New ad created:', data.ad);
+    });
+
     websocketSubscribed.value = true;
   }
 
   function unsubscribeFromRealtime() {
     if (!websocketSubscribed.value) return;
     websocketService.unsubscribe('notification.created');
+    websocketService.unsubscribe('post.comment.created');
+    websocketService.unsubscribe('post.liked');
+    websocketService.unsubscribe('ad.created');
     websocketSubscribed.value = false;
+  }
+
+  function showNotification(notification) {
+    try {
+      Notify.create({
+        type: 'info',
+        message: notification.title,
+        caption: notification.message,
+        icon: getNotificationIcon(notification.type),
+        position: 'top',
+        timeout: 5000,
+        actions: [{ icon: 'close', color: 'white' }],
+      });
+    } catch (e) {
+      // Fallback to console if Quasar not available
+      console.log('Notification:', notification.title, notification.message);
+    }
+  }
+
+  function getNotificationIcon(type) {
+    const icons = {
+      comment: 'comment',
+      like: 'favorite',
+      ad_created: 'campaign',
+      default: 'notifications',
+    };
+    return icons[type] || icons.default;
   }
 
   return {

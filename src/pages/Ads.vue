@@ -91,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useAdsStore } from '../stores/ads';
 import { debounce } from 'lodash-es';
 import LazyImage from '../components/LazyImage.vue';
@@ -111,6 +111,11 @@ const regionOptions = ['Belgrade', 'Novi Sad', 'Nis', 'Other'];
 
 onMounted(async () => {
   await adsStore.fetchAds();
+  adsStore.subscribeToRealtime();
+});
+
+onUnmounted(() => {
+  adsStore.unsubscribeFromRealtime();
 });
 
 const handleSearch = debounce(async () => {

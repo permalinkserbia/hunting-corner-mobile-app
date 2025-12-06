@@ -138,6 +138,12 @@ const imageStyle = computed(() => {
     height: '100%',
     objectFit: props.fit,
     transition: 'opacity 0.3s ease-in-out',
+    // Prevent image from interfering with scroll
+    touchAction: 'pan-x pan-y',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+    WebkitTouchCallout: 'none',
+    pointerEvents: 'auto',
   };
   
   return style;
@@ -228,11 +234,26 @@ onUnmounted(() => {
 .lazy-image-container {
   position: relative;
   overflow: hidden;
+  /* Allow both horizontal and vertical panning for proper touch handling */
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 .lazy-image {
   opacity: 0;
   transition: opacity 0.3s ease-in-out;
+  /* Allow pan gestures but prevent unwanted scroll behavior */
+  touch-action: pan-x pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+  /* Prevent image dragging */
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
 }
 
 .lazy-image-loaded {
@@ -249,6 +270,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   background-color: #f5f5f5;
+  touch-action: pan-x pan-y;
 }
 
 .lazy-image-error {
@@ -263,6 +285,7 @@ onUnmounted(() => {
   justify-content: center;
   background-color: #f5f5f5;
   color: #999;
+  touch-action: pan-x pan-y;
 }
 </style>
 
