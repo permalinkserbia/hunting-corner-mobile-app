@@ -45,12 +45,6 @@ async function initialize() {
     // Subscribe to ads channel for new ad notifications
     const adsChannel = pusher.subscribe('ads');
     channels.set('ads', adsChannel);
-    
-    // Also subscribe to timeline channel for real-time updates
-    const timelineChannel = pusher.subscribe('timeline');
-    
-    // Subscribe to ads channel for new ad notifications
-    const adsChannel = pusher.subscribe('ads');
   } catch (error) {
     console.warn('Failed to initialize WebSocket:', error);
     return;
