@@ -67,7 +67,7 @@
           </div>
 
           <!-- Content -->
-          <div class="article-content q-mb-md" v-html="article.content"></div>
+          <div class="article-content q-mb-md article-content-wrapper" v-html="article.content"></div>
 
           <!-- Gallery -->
           <div v-if="article.gallery && article.gallery.length > 0" class="q-mb-md">
@@ -246,57 +246,52 @@ const handleImageError = (event) => {
   margin-bottom: 1rem;
 }
 
+/* Scoped styles as fallback - global styles in app.scss are primary */
+.article-content-wrapper :deep(h1),
 .article-content :deep(h1) {
-  font-size: 1.5rem;
+  font-size: 1.1rem !important;
   margin-top: 1.5rem;
   margin-bottom: 1rem;
   font-weight: bold;
   line-height: 1.4;
 }
 
+.article-content-wrapper :deep(h2),
 .article-content :deep(h2) {
-  font-size: 1.25rem;
+  font-size: 1rem !important;
   margin-top: 1.25rem;
   margin-bottom: 0.875rem;
   font-weight: bold;
   line-height: 1.4;
 }
 
+.article-content-wrapper :deep(h3),
 .article-content :deep(h3) {
-  font-size: 1.1rem;
+  font-size: 0.95rem !important;
   margin-top: 1rem;
   margin-bottom: 0.75rem;
   font-weight: bold;
   line-height: 1.4;
 }
 
-/* Make headings smaller on mobile */
-@media (max-width: 768px) {
-  .article-content :deep(h1) {
-    font-size: 1.25rem;
-  }
-  
-  .article-content :deep(h2) {
-    font-size: 1.1rem;
-  }
-  
-  .article-content :deep(h3) {
-    font-size: 1rem;
-  }
+.article-content-wrapper :deep(h4),
+.article-content :deep(h4) {
+  font-size: 0.9rem !important;
+  margin-top: 0.875rem;
+  margin-bottom: 0.75rem;
+  font-weight: bold;
+  line-height: 1.4;
 }
 
-@media (max-width: 480px) {
-  .article-content :deep(h1) {
-    font-size: 1.1rem;
-  }
-  
-  .article-content :deep(h2) {
-    font-size: 1rem;
-  }
-  
-  .article-content :deep(h3) {
-    font-size: 0.95rem;
-  }
+.article-content-wrapper :deep(h5),
+.article-content :deep(h5),
+.article-content-wrapper :deep(h6),
+.article-content :deep(h6) {
+  font-size: 0.85rem !important;
+  margin-top: 0.75rem;
+  margin-bottom: 0.625rem;
+  font-weight: bold;
+  line-height: 1.4;
 }
 
 .video-container {
