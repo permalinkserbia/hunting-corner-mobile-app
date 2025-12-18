@@ -29,6 +29,14 @@ async function initialize() {
       return;
     }
 
+    // Verify token exists
+    if (!authStore.accessToken) {
+      console.error('No access token available for WebSocket authentication');
+      return;
+    }
+
+    console.log('Initializing Pusher with token:', authStore.accessToken.substring(0, 20) + '...');
+
     // Configure Pusher with proper auth endpoint
     pusher = new Pusher(PUSHER_KEY, {
       cluster: PUSHER_CLUSTER,
