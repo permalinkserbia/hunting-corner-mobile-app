@@ -172,10 +172,26 @@ const handleLogout = async () => {
     cancel: true,
     persistent: true,
   }).onOk(async () => {
-    if (authStoreRef.value) {
-      await authStoreRef.value.logout();
+    try {
+      if (authStoreRef.value) {
+        await authStoreRef.value.logout();
+      }
+      
+      // Ensure we wait a bit for storage to clear
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Force navigation to login and clear any cached route data
+      await router.push('/auth/login');
+      
+      // Force reload if still on a protected route
+      if (router.currentRoute.value.meta?.requiresAuth) {
+        window.location.href = '/#/auth/login';
+      }
+    } catch (error) {
+      console.error('Logout navigation error:', error);
+      // Force redirect as fallback
+      window.location.href = '/#/auth/login';
     }
-    router.push('/auth/login');
   });
 };
 </script>

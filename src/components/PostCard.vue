@@ -119,7 +119,13 @@
             error-text="Slika nije dostupna"
             @error="handleImageError"
           />
-          <video v-else-if="media.type === 'video' && !isYouTubeUrl(media.url)" :src="getImageUrl(media.url)" controls class="full-width" />
+          <video 
+            v-else-if="media.type === 'video' && !isYouTubeUrl(media.url)" 
+            :src="getImageUrl(media.url)" 
+            controls 
+            class="post-video"
+            preload="metadata"
+          />
         </q-carousel-slide>
       </q-carousel>
 
@@ -256,6 +262,7 @@ const youtubeEmbedUrl = computed(() => {
 function handleImageError(event) {
   console.warn('Failed to load image:', event.target.src);
 }
+
 
 function getYouTubeEmbedUrl(url) {
   if (!url || typeof url !== 'string') {
@@ -444,6 +451,10 @@ const handleReport = () => {
   touch-action: pan-x pan-y;
   height: 100%;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .post-carousel :deep(img) {
@@ -463,6 +474,53 @@ const handleReport = () => {
   display: block;
   max-width: 100%;
   height: auto;
+}
+
+/* Video styling to fill container properly */
+.post-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #000;
+  display: block;
+}
+
+.post-video::-webkit-media-controls-play-button {
+  display: none !important;
+}
+
+.post-video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+}
+
+.post-carousel-slide video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #000;
+}
+
+.post-carousel-slide video::-webkit-media-controls-play-button {
+  display: none !important;
+}
+
+.post-carousel-slide video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+}
+
+.post-carousel :deep(.q-carousel__slide) video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #000;
+}
+
+.post-carousel :deep(.q-carousel__slide) video::-webkit-media-controls-play-button {
+  display: none !important;
+}
+
+.post-carousel :deep(.q-carousel__slide) video::-webkit-media-controls-start-playback-button {
+  display: none !important;
 }
 
 /* Ensure carousel track allows proper touch handling */

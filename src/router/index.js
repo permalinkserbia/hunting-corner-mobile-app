@@ -128,20 +128,27 @@ router.beforeEach(async (to, from, next) => {
     const { useAuthStore } = await import('../stores/auth');
     const authStore = await getStoreSafely(() => useAuthStore(), 20, 50);
 
+    if (!authStore) {
+      next({ name: 'login', query: { redirect: to.fullPath } });
+      return;
+    }
+
     // Auth should be initialized by boot file, but ensure it's done
+    // Only initialize if we don't have auth data in memory
     if (!authStore.user && !authStore.accessToken) {
       await authStore.initialize();
     }
 
-    if (!authStore.isAuthenticated) {
+    // Double-check authentication after initialization
+    if (!authStore.isAuthenticated || !authStore.user || !authStore.accessToken) {
       next({ name: 'login', query: { redirect: to.fullPath } });
     } else {
       next();
     }
   } catch (error) {
-    // If store access fails, allow navigation (components will handle auth)
-    console.warn('Auth check failed, allowing navigation:', error);
-    next();
+    // If store access fails, redirect to login
+    console.warn('Auth check failed, redirecting to login:', error);
+    next({ name: 'login', query: { redirect: to.fullPath } });
   }
 });
 

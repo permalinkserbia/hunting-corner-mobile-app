@@ -1,6 +1,18 @@
 <template>
   <q-page>
-    <q-card v-if="authStore?.user">
+    <div v-if="!authStore || !authStore.isAuthenticated" class="flex flex-center q-pa-lg">
+      <div class="text-center">
+        <q-icon name="lock" size="64px" color="grey" />
+        <div class="text-h6 q-mt-md">Potrebna je prijava</div>
+        <q-btn
+          label="Prijavi se"
+          color="primary"
+          @click="$router.push('/auth/login')"
+          class="q-mt-md"
+        />
+      </div>
+    </div>
+    <q-card v-else-if="authStore?.user">
       <q-card-section class="text-center">
         <q-avatar size="120px">
           <LazyImage

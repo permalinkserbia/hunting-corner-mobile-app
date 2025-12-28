@@ -8,10 +8,16 @@ export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref(null);
   const refreshToken = ref(null);
   const loading = ref(false);
+  const isLoggingOut = ref(false);
 
-  const isAuthenticated = computed(() => !!accessToken.value && !!user.value);
+  const isAuthenticated = computed(() => !!accessToken.value && !!user.value && !isLoggingOut.value);
 
   async function initialize() {
+    // Don't initialize if we're in the process of logging out
+    if (isLoggingOut.value) {
+      return;
+    }
+
     try {
       const storedToken = await storageService.get('access_token');
       const storedRefresh = await storageService.get('refresh_token');
@@ -113,20 +119,71 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
+    // Set flag to prevent re-initialization
+    isLoggingOut.value = true;
+
     try {
-      await apiService.post('/auth/logout');
+      // Disconnect websocket first
+      try {
+        const websocketService = await import('../services/websocket');
+        websocketService.default.disconnect();
+      } catch (error) {
+        console.warn('Failed to disconnect websocket:', error);
+      }
+
+      // Call logout API
+      try {
+        await apiService.post('/auth/logout');
+      } catch (error) {
+        // Continue with logout even if API call fails
+        console.error('Logout API error:', error);
+      }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Clear all auth state FIRST (before clearing storage)
       accessToken.value = null;
       refreshToken.value = null;
       user.value = null;
 
+      // Clear API token
+      apiService.setAuthToken(null);
+
+      // Clear storage (ensure all keys are removed)
       await storageService.remove('access_token');
       await storageService.remove('refresh_token');
       await storageService.remove('user');
 
-      apiService.setAuthToken(null);
+      // Force clear any cached data
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          // Remove any other auth-related keys
+          const keysToRemove = [];
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const key = window.localStorage.key(i);
+            if (key && (key.includes('auth') || key.includes('token') || key.includes('user'))) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach(key => window.localStorage.removeItem(key));
+        } catch (error) {
+          console.warn('Failed to clear localStorage:', error);
+        }
+      }
+
+      // Clear localforage if on web
+      if (typeof window !== 'undefined' && !window.Capacitor?.isNativePlatform()) {
+        try {
+          await storageService.clear();
+        } catch (error) {
+          console.warn('Failed to clear storage:', error);
+        }
+      }
+
+      // Reset logout flag after a delay to allow navigation
+      setTimeout(() => {
+        isLoggingOut.value = false;
+      }, 1000);
     }
   }
 
