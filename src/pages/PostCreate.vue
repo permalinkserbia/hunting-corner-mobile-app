@@ -14,11 +14,26 @@
       <div v-if="mediaFiles.length > 0" class="row q-gutter-sm">
         <div v-for="(file, index) in mediaFiles" :key="index" class="relative-position">
           <q-img
-            v-if="file.preview"
+            v-if="file.preview && file.type === 'image'"
             :src="file.preview"
             style="width: 100px; height: 100px"
             class="rounded-borders"
+            @error="handlePreviewError(index)"
           />
+          <div
+            v-else
+            class="flex flex-center rounded-borders bg-grey-3"
+            style="width: 100px; height: 100px"
+          >
+            <q-icon
+              :name="file.type === 'video' ? 'videocam' : 'image'"
+              size="32px"
+              color="grey-6"
+            />
+            <div class="text-caption text-grey-6 q-mt-xs text-center" style="font-size: 10px">
+              {{ file.file?.name || 'File' }}
+            </div>
+          </div>
           <q-btn
             icon="close"
             round
@@ -82,7 +97,6 @@ import { useQuasar } from 'quasar';
 import uploadService from '../services/upload';
 import storageService from '../services/storage';
 import { validateRequired } from '../utils/validators';
-import apiService from '../services/api';
 import { getStoreSafely } from '../utils/pinia';
 
 const router = useRouter();
@@ -103,7 +117,7 @@ onMounted(async () => {
   await nextTick();
   await new Promise((resolve) => requestAnimationFrame(resolve));
   await new Promise((resolve) => setTimeout(resolve, 100));
-  
+
   try {
     const { usePostsStore } = await import('../stores/posts');
     postsStoreRef.value = await getStoreSafely(() => usePostsStore(), 20, 50);
@@ -113,7 +127,7 @@ onMounted(async () => {
     const { usePostsStore } = await import('../stores/posts');
     postsStoreRef.value = usePostsStore();
   }
-  
+
   // Load draft
   const draft = await storageService.get(DRAFT_KEY);
   if (draft) {
@@ -136,14 +150,50 @@ const handleFileSelect = async (files) => {
 
   const fileArray = Array.isArray(files) ? files : [files];
   for (const file of fileArray) {
-    const preview = URL.createObjectURL(file);
-    mediaFiles.value.push({ file, preview });
+    try {
+      const fileType = file.type.startsWith('video/') ? 'video' : 'image';
+      let preview = null;
+
+      // Try to create preview for images (may fail for HEIC and other unsupported formats)
+      if (fileType === 'image') {
+        try {
+          preview = URL.createObjectURL(file);
+        } catch (error) {
+          console.warn('Failed to create preview for file:', file.name, error);
+          // Preview will be null, fallback UI will be shown
+        }
+      }
+
+      mediaFiles.value.push({
+        file,
+        preview,
+        type: fileType,
+        name: file.name
+      });
+    } catch (error) {
+      console.error('Error processing file:', file.name, error);
+      $q.notify({
+        type: 'warning',
+        message: `Greška pri obradi fajla: ${file.name}`,
+        position: 'top',
+      });
+    }
   }
 };
 
 const removeMedia = (index) => {
-  URL.revokeObjectURL(mediaFiles.value[index].preview);
+  if (mediaFiles.value[index]?.preview) {
+    URL.revokeObjectURL(mediaFiles.value[index].preview);
+  }
   mediaFiles.value.splice(index, 1);
+};
+
+const handlePreviewError = (index) => {
+  // If preview fails to load, remove the preview URL and show fallback
+  if (mediaFiles.value[index]?.preview) {
+    URL.revokeObjectURL(mediaFiles.value[index].preview);
+    mediaFiles.value[index].preview = null;
+  }
 };
 
 const handleSubmit = async () => {
@@ -193,7 +243,7 @@ const publishPost = async (mediaUrls) => {
   if (!postsStoreRef.value) {
     throw new Error('Posts store not available');
   }
-  
+
   const postData = {
     content: content.value,
     media: mediaUrls,
